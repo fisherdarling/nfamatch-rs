@@ -33,6 +33,10 @@ impl Table {
         &mut self.rows
     }
 
+    pub fn does_match(input: String) -> Option<u32> {
+        todo!
+    }
+
     pub fn optimize(&mut self) {
         // Optimize until completed
         while self.optimize_step() {}
