@@ -1,7 +1,7 @@
 #![feature(never_type)]
 
-pub(crate) mod row;
-pub(crate) mod table;
+pub mod row;
+pub mod table;
 
 pub use row::Row;
 pub use table::Table;
