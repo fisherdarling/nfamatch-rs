@@ -12,3 +12,4 @@ path = "bin/main.rs"
 
 [dependencies]
 dfa-optimizer = { path = "../dfa-optimizer" }
+structopt = "*"
