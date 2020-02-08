@@ -34,7 +34,7 @@ impl Table {
     }
 
     pub fn does_match(input: String) -> Option<u32> {
-        todo!
+        todo!()
     }
 
     pub fn optimize(&mut self) {
