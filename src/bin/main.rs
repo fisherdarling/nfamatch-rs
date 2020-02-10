@@ -4,7 +4,7 @@ use std::path::PathBuf;
 
 use structopt::StructOpt;
 
-use dfa::{Row, Table};
+use dfa_optimizer::{Row, Table};
 
 /// dfa reads in a formatted DFA file and spits
 /// out an optimized form of given DFA.

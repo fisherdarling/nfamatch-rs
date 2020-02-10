@@ -33,7 +33,7 @@ impl Table {
         &mut self.rows
     }
 
-    pub fn does_match(input: String) -> Option<u32> {
+    pub fn does_match(&self, input: String) -> Option<u32> {
         todo!()
     }
 
