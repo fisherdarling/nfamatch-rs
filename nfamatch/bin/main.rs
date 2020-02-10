@@ -6,6 +6,7 @@ use std::path::PathBuf;
 use structopt::StructOpt;
 
 use dfa::{Row, Table};
+use nfa;
 
 #[derive(Debug, Clone, StructOpt)]
 struct Args {
@@ -25,8 +26,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let reader = BufReader::new(file);
     let mut writer = BufWriter::new(out);
 
-    let rows: Vec<Row>;
-    let mut table = Table::from(rows);
+    let nfa = nfa::from(reader);
+    let mut table = nfa.to_dfa();
     table.optimize();
 
     for input in args.rest {
