@@ -1,6 +1,6 @@
 #![allow(non_snake_case)]
 use std::fs::File;
-use std::io::{BufRead, BufReader, BufWriter, Write};
+use std::io::{BufWriter, Write};
 use std::path::PathBuf;
 use nfamatch::Nfa;
 use structopt::StructOpt;

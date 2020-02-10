@@ -1,6 +1,8 @@
 use std::collections::{HashMap, BTreeSet};
 use std::path::Path;
 use std::iter::FromIterator;
+use std::fs::File;
+use std::io::{BufRead, BufReader};
 use dfa_optimizer::{Row as DfaRow, Table as DfaTable};
 
 pub type State = BTreeSet<usize>;
