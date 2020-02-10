@@ -5,7 +5,7 @@ use std::path::PathBuf;
 
 use structopt::StructOpt;
 
-use dfa::{Row, Table};
+use dfa_optimizer::{Row, Table};
 
 #[derive(Debug, Clone, StructOpt)]
 struct Args {
@@ -20,12 +20,13 @@ struct Args {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::from_args();
 
-    let file = File::open(args.file)?;
-    let out = File::open(args.out)?;
-    let reader = BufReader::new(file);
-    let mut writer = BufWriter::new(out);
+    let input_file = File::open(args.file)?;
+    let output_file = File::open(args.out)?;
+    let reader = BufReader::new(input_file);
+    let mut writer = BufWriter::new(output_file);
 
-    let rows: Vec<Row>;
+    // TODO: Read Rows and create separate NFA row type.
+    let rows: Vec<Row> = Vec::new();
     let mut table = Table::from(rows);
     table.optimize();
 
@@ -39,6 +40,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     for row in table.rows() {
         writeln!(writer, "{}", row)?;
     }
+
+    writer.flush()?;
 
     Ok(())
 }
