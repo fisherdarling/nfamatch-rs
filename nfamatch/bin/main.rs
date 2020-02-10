@@ -36,7 +36,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             Some(i) => println!("OUTPUT {}", i),
         }
     }
-    
+
     for row in table.rows() {
         writeln!(writer, "{}", row)?;
     }

@@ -1,3 +1,7 @@
+#![feature(never_type)]
+
+pub mod row;
+pub mod table;
 
 #[cfg(test)]
 mod tests {
