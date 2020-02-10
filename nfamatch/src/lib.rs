@@ -2,6 +2,9 @@
 
 pub mod row;
 pub mod table;
+pub mod nfa;
+
+pub use nfa::Nfa;
 
 #[cfg(test)]
 mod tests {

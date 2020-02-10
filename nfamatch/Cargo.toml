@@ -4,6 +4,10 @@ version = "0.1.0"
 authors = ["Fisher Darling <fdarling@mines.edu>"]
 edition = "2018"
 
+[lib]
+name = "nfamatch"
+path = "./src/lib.rs"
+
 [[bin]]
 name = "NFAMATCH"
 path = "bin/main.rs"

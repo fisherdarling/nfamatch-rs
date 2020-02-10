@@ -2,7 +2,7 @@
 use std::fs::File;
 use std::io::{BufRead, BufReader, BufWriter, Write};
 use std::path::PathBuf;
-
+use nfamatch::Nfa;
 use structopt::StructOpt;
 
 use dfa_optimizer::{Row, Table};
@@ -20,14 +20,13 @@ struct Args {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::from_args();
 
-    let input_file = File::open(args.file)?;
     let output_file = File::open(args.out)?;
-    let reader = BufReader::new(input_file);
     let mut writer = BufWriter::new(output_file);
 
     // TODO: Read Rows and create separate NFA row type.
-    let rows: Vec<Row> = Vec::new();
-    let mut table = Table::from(rows);
+    let nfa = Nfa::from_file(args.file);
+
+    let mut table = nfa.to_dfa();
     table.optimize();
 
     for input in args.rest {
