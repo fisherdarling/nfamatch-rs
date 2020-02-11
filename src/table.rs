@@ -33,8 +33,29 @@ impl Table {
         &mut self.rows
     }
 
-    pub fn does_match(&self, input: String) -> Option<u32> {
-        todo!()
+    pub fn does_match(&self, input: &str, mapping: &HashMap<char, usize>) -> Option<usize> {
+        let mut current_state = 0;
+        let mut chars = input.char_indices();
+
+        while let Some((n, character)) = chars.next() {
+            let transition = mapping[&character];
+
+            // If the current character matches some transition, 
+            // the option will be some:
+            if let Some(next_state) = self[current_state][transition] {
+                current_state = next_state;
+            } else {
+                // Match failed, return the character that caused it to fail:
+                return Some(n + 1);
+            }
+        }
+
+        // If we end at an accepting state we have matched the characters.
+        if self[current_state].is_accepting() {
+            None
+        } else {
+            Some(input.len() + 1)
+        }
     }
 
     pub fn optimize(&mut self) {
