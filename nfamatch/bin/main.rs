@@ -29,8 +29,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut table = nfa.to_dfa();
     table.optimize();
 
+    let mapping = todo!();
+
     for input in args.rest {
-        match table.does_match(input) {
+        match table.does_match(&input, &mapping) {
             None => println!("OUTPUT :M:"),
             Some(i) => println!("OUTPUT {}", i),
         }
