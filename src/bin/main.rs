@@ -6,6 +6,8 @@ use structopt::StructOpt;
 
 use dfa_optimizer::{Row, Table};
 
+use std::collections::HashMap;
+
 /// dfa reads in a formatted DFA file and spits
 /// out an optimized form of given DFA.
 #[derive(Debug, Clone, StructOpt)]
@@ -19,10 +21,16 @@ struct Args {
     /// Path to output the optimized DFA
     #[structopt(short, long)]
     out: PathBuf,
+    /// The alphabet of our DFA
+    #[structopt(short, long)]
+    alphabet: Vec<char>,
+    /// Tokens to match the DFA against
+    #[structopt(short, long)]
+    tokens: Vec<String>,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let args = Args::from_args();
+    let mut args = Args::from_args();
 
     let file = File::open(args.file)?;
     let reader = BufReader::new(file);
@@ -45,6 +53,25 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if args.verbose {
         println!("\nOptimal DFA:");
         print!("{}", table);
+        println!();
+    }
+
+    // args.alphabet.sort();
+    let mut mapping = HashMap::new();
+
+    for (i, c) in args.alphabet.iter().enumerate() {
+        mapping.insert(c.clone(), i);
+    }
+
+    if args.verbose {
+        println!("Alphabet: {:?}", args.alphabet);
+        println!("Tokens: {:?}", args.tokens);
+        println!("Mapping: {:#?}", mapping);
+        println!();
+    }
+
+    for token in args.tokens {
+        println!("{}: {:?}", token, table.does_match(&token, &mapping));
     }
 
     let new_file = File::create(args.out)?;
