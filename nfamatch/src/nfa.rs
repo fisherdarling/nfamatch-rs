@@ -12,12 +12,16 @@ pub struct Nfa {
     // Lambda is always char 0
     transitions: Vec<Vec<Vec<usize>>>,
     accepting_states: BTreeSet<usize>,
-    character_map:HashMap<usize, char>,
+    character_map:HashMap<char, usize>,
 }
 
 impl Nfa {
     pub fn new() -> Self {
         todo!()
+    }
+
+    pub fn character_map(&self) -> &HashMap<char, usize> {
+        &(self.character_map)
     }
 
     pub fn to_dfa(&self) -> DfaTable {
@@ -47,7 +51,7 @@ impl Nfa {
 
         while L.len() > 0 {
             let S = L.pop().unwrap();
-            for (character, _) in self.character_map.iter() {
+            for (_, character) in self.character_map.iter() {
                 let R = self.follow_lambda(&self.follow_char(&S, *character));
                 let R3 = R.clone();
                 if !(statemap.contains_key(&R)) {
