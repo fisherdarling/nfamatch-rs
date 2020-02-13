@@ -18,6 +18,14 @@ impl Row {
         }
     }
 
+    pub fn blank_row(accepting_state: bool, id: usize, num_transitions: usize) -> Self {
+        Self {
+            accepting_state,
+            id,
+            transitions: (1..num_transitions).map(|_| None).collect(),
+        }
+    }
+
     pub fn is_accepting(&self) -> bool {
         self.accepting_state
     }
