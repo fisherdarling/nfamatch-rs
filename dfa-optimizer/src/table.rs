@@ -21,6 +21,14 @@ impl Table {
         }
     }
 
+    pub fn blank_table(alpha: usize) -> Self {
+        let alpha_assignments = (0..alpha).collect();
+        Self {
+            rows: Vec::new(),
+            alpha_assignments,
+        }
+    }
+
     // pub fn get_start(&self) -> &Row {
     //     &self.start
     // }
@@ -31,6 +39,10 @@ impl Table {
 
     pub fn rows_mut(&mut self) -> &mut [Row] {
         &mut self.rows
+    }
+
+    pub fn push_row(&mut self, row: Row) {
+        self.rows.push(row);
     }
 
     pub fn does_match(&self, input: &str, mapping: &HashMap<char, usize>) -> Option<usize> {
