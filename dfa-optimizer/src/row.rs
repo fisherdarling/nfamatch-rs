@@ -22,7 +22,7 @@ impl Row {
         Self {
             accepting_state,
             id,
-            transitions: (1..num_transitions).map(|_| None).collect(),
+            transitions: (0..num_transitions).map(|_| None).collect(), // All transitions are None 
         }
     }
 
