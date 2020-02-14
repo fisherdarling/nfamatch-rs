@@ -1,7 +1,4 @@
 pub mod nfa;
-pub mod row;
-pub mod table;
-
 pub use nfa::Nfa;
 
 #[cfg(test)]
