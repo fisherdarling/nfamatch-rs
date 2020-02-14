@@ -1,8 +1,8 @@
 #![allow(non_snake_case)]
+use nfamatch::Nfa;
 use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::path::PathBuf;
-use nfamatch::Nfa;
 use structopt::StructOpt;
 
 use dfa_optimizer::{Row, Table};

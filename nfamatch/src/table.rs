@@ -1,5 +1,5 @@
-use std::str::FromStr;
 use std::fmt;
+use std::str::FromStr;
 
 use dfa_optimizer::Table as DfaTable;
 

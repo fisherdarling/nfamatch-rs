@@ -1,8 +1,8 @@
 #![feature(never_type)]
 
+pub mod nfa;
 pub mod row;
 pub mod table;
-pub mod nfa;
 
 pub use nfa::Nfa;
 

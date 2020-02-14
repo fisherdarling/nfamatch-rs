@@ -1,9 +1,9 @@
-use std::collections::{HashMap, BTreeSet};
-use std::path::Path;
-use std::iter::FromIterator;
+use dfa_optimizer::{Row as DfaRow, Table as DfaTable};
+use std::collections::{BTreeSet, HashMap};
 use std::fs::File;
 use std::io::{BufRead, BufReader};
-use dfa_optimizer::{Row as DfaRow, Table as DfaTable};
+use std::iter::FromIterator;
+use std::path::Path;
 
 pub type StateSet = BTreeSet<usize>;
 pub struct Nfa {
@@ -12,7 +12,7 @@ pub struct Nfa {
     // states_to_processambda is always char 0
     transitions: Vec<Vec<Vec<usize>>>,
     accepting_states: BTreeSet<usize>,
-    character_map:HashMap<char, usize>,
+    character_map: HashMap<char, usize>,
 }
 
 impl Nfa {
@@ -28,81 +28,76 @@ impl Nfa {
         let alpha_len = self.character_map.len() - 1;
         let mut table = DfaTable::blank_table(alpha_len);
         let mut seen_states: HashMap<StateSet, usize> = HashMap::new();
-        let mut counter = 0;
-        // TODO: Stack of &StateSet, rename states_to_process => state_stack
+        let mut row_number = 0;
+
+        // TODO: Stack of &StateSet
         let mut states_to_process = Vec::new();
-        let mut B = BTreeSet::new();
+        let mut initial_state = BTreeSet::new();
 
-        B.insert(0); // insert starting node
-        B = self.follow_lambda(&B);
-        let new_row = DfaRow::blank_row(
-            false,
-            counter,
-            alpha_len,
-        ); // -1 because the DFA does not have lambda
+        initial_state.insert(0); // insert starting node
+        initial_state = self.follow_lambda(&initial_state);
+        let new_row = DfaRow::blank_row(false, row_number, alpha_len);
         table.push_row(new_row);
-        let B2 = B.clone();
-        seen_states.insert(B, counter);
-        counter += 1;
 
-        states_to_process.push(B2);
-        //End of firs slide
-        counter = counter + 1;
-        //TODO insert a blank row into table
+        seen_states.insert(initial_state.clone(), row_number);
+        states_to_process.push(initial_state);
+        row_number += 1;
 
-        while let Some(S) = states_to_process.pop() {
+        while let Some(next_state_to_process) = states_to_process.pop() {
             for character in self.character_map.values() {
-                let R = self.follow_lambda(&self.follow_char(&S, *character));
-                let R3 = R.clone();
-                if !seen_states.contains_key(&R) {
-                    let accepting_state = R.intersection(&self.accepting_states).next().is_some();
+                let lambda_closure =
+                    self.follow_lambda(&self.follow_char(&next_state_to_process, *character));
+                let lambda_clone = lambda_closure.clone();
 
-                    let new_row = DfaRow::blank_row(
-                        accepting_state,
-                        counter,
-                        alpha_len
-                    );
+                if !seen_states.contains_key(&lambda_closure) {
+                    let accepting_state = lambda_closure
+                        .intersection(&self.accepting_states)
+                        .next()
+                        .is_some();
+
+                    let new_row = DfaRow::blank_row(accepting_state, row_number, alpha_len);
 
                     table.push_row(new_row);
-                    
-                    let R2 = R.clone();
-                    seen_states.insert(R, counter);
 
-                    counter += 1;
-                    states_to_process.push(R2)
+                    seen_states.insert(lambda_closure.clone(), row_number);
+                    states_to_process.push(lambda_closure);
+
+                    row_number += 1;
                 }
-                let curr_row = seen_states[&S];
-                let tran_row = seen_states[&R3];
-                table[curr_row][*character] = Some(tran_row);
+
+                let current_row = seen_states[&next_state_to_process];
+                let transition = seen_states[&lambda_clone];
+                table[current_row][*character] = Some(transition);
             }
         }
+
         table
     }
 
     /*
-    * returns the set of NFA states encountered by
-    * recursively following only λ transitions.
-    */
+     * returns the set of NFA states encountered by
+     * recursively following only λ transitions.
+     */
     fn follow_lambda(&self, states: &StateSet) -> StateSet {
         let mut states_to_process = Vec::from_iter(states.into_iter());
-        let mut S = StateSet::new(); 
+        let mut lambda_closure = StateSet::new();
         while let Some(t) = states_to_process.pop() {
-            S.insert(*t);
+            lambda_closure.insert(*t);
             for l_tran in self.transitions[*t][0].iter() {
-                if !S.contains(&l_tran) {
-                    S.insert(*l_tran);
+                if !lambda_closure.contains(&l_tran) {
+                    lambda_closure.insert(*l_tran);
                     states_to_process.push(l_tran);
                 }
             }
         }
 
-        S
+        lambda_closure
     }
 
     /*
-    * returns the set of NFA states obtained from following character c
-    * from a set of states.
-    */
+     * returns the set of NFA states obtained from following character c
+     * from a set of states.
+     */
     fn follow_char(&self, states: &StateSet, c: usize) -> StateSet {
         let mut follow = BTreeSet::new();
         for state in states.iter() {
@@ -113,7 +108,7 @@ impl Nfa {
         follow
     }
 
-    pub fn from_file<P: AsRef<Path>> (file:P) -> Self {
+    pub fn from_file<P: AsRef<Path>>(file: P) -> Self {
         todo!()
     }
 }
