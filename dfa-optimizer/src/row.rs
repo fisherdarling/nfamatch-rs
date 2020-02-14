@@ -58,9 +58,9 @@ impl IndexMut<usize> for Row {
 }
 
 impl FromStr for Row {
-    type Err = !;
+    type Err = ();
 
-    fn from_str(input: &str) -> Result<Row, !> {
+    fn from_str(input: &str) -> Result<Row, ()> {
         let tokens: Vec<&str> = input.split(' ').collect();
 
         match tokens.as_slice() {

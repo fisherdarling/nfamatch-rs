@@ -32,7 +32,7 @@ impl From<Vec<Row>> for Table {
 }
 
 impl FromStr for Table {
-    type Err = !;
+    type Err = ();
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         todo!()

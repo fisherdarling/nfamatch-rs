@@ -18,7 +18,7 @@ impl fmt::Display for Row {
 }
 
 impl FromStr for Row {
-    type Err = !;
+    type Err = ();
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         // let mut tokens: Vec<&str> = input.split(" ").collect();
