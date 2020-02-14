@@ -21,8 +21,8 @@ impl Table {
         }
     }
 
-    pub fn blank_table(alpha: usize) -> Self {
-        let alpha_assignments = (0..alpha).collect();
+    pub fn blank_table(size_of_alpha: usize) -> Self {
+        let alpha_assignments = (0..size_of_alpha).collect();
         Self {
             rows: Vec::new(),
             alpha_assignments,
@@ -52,7 +52,7 @@ impl Table {
         while let Some((n, character)) = chars.next() {
             let transition = mapping[&character];
 
-            // If the current character matches some transition, 
+            // If the current character matches some transition,
             // the option will be some:
             if let Some(next_state) = self[current_state][transition] {
                 current_state = next_state;

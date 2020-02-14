@@ -66,7 +66,7 @@ impl Nfa {
                         Some(_) => table[counter].set_accepting(true),
                         None => (),
                     }
-                    
+
                     let R2 = R.clone();
                     statemap.insert(R, counter);
 
@@ -87,7 +87,7 @@ impl Nfa {
     */
     fn follow_lambda(&self, states: &StateSet) -> StateSet {
         let mut L = Vec::from_iter(states.into_iter());
-        let mut S = StateSet::new(); 
+        let mut S = StateSet::new();
         while L.len() > 0 {
             if let Some(t) = L.pop() {
                 S.insert(*t);
