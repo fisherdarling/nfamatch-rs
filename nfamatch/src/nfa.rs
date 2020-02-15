@@ -79,7 +79,7 @@ impl Nfa {
                 table[current_row][*character] = Some(transition);
             }
         }
-
+        debug!("Final DFA:\n{}", table);
         table
     }
 
