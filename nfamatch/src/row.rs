@@ -27,6 +27,10 @@ impl Row {
         self.from_id
     }
 
+    pub fn get_to_id(&self) -> usize {
+        self.to_id
+    }
+
     pub fn get_transitions(&self) -> &Vec<char> {
         &self.transitions
     }

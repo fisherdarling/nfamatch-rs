@@ -136,7 +136,7 @@ impl Nfa {
 
         let (first_line, rows_as_str) = all_rows.split_first().expect("Unable to parse input file");
 
-        let char_map = get_char_map(&first_line);
+        let char_map: HashMap<char, usize> = get_char_map(&first_line);
 
         println!("Char map: {:#?}", char_map);
 
@@ -155,27 +155,39 @@ impl Nfa {
             .collect();
         println!("Accepting state ids: {:#?}", accepting_state_from_ids);
 
-        let transitions: Vec<Vec<Vec<usize>>> = get_transitions(&rows);
+        let transitions: Vec<Vec<Vec<usize>>> = get_transitions(&rows, &char_map);
 
         // Move this do different place? Not sure why it has to be here
 
-        fn get_transitions(rows: &Vec<Row>) -> Vec<Vec<Vec<usize>>> {
-            let mut temp: Vec<Vec<Vec<usize>>> = Vec::new();
+        fn get_transitions(
+            rows: &Vec<Row>,
+            char_map: &HashMap<char, usize>,
+        ) -> Vec<Vec<Vec<usize>>> {
+            let mut outer: Vec<Vec<Vec<usize>>> = Vec::new();
 
             for row in rows {
+                let mut middle: Vec<Vec<usize>> = Vec::new();
+                let from_id = row.get_from_id();
+                let to_id = row.get_to_id();
                 for c in row.get_transitions() {
-                    println!("char in row.get_transitions(), {}", c);
+                    let mut inner: Vec<usize> = Vec::new();
+                    println!(
+                        "char we are pushing: {} corosponding number: {} ",
+                        c,
+                        *char_map.get(c).unwrap()
+                    );
+                    inner.push(*char_map.get(c).unwrap());
                 }
             }
 
-            return temp;
+            outer
         }
         fn get_char_map(first_line: &String) -> HashMap<char, usize> {
             let alphabet_letters: Vec<&str> = first_line
                 .split(' ')
                 .collect::<Vec<&str>>()
                 .into_iter()
-                .skip(2) // Remove the first two chars (num cols and lambda char)
+                .skip(1) // Remove the first two chars (num cols and lambda char)
                 .collect();
 
             let mut map = HashMap::new();
