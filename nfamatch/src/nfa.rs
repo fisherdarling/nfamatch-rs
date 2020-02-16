@@ -11,7 +11,7 @@ pub struct Nfa {
     // transition[start node][char][outgoing#] = end node
     // Starting state is always node 0
     // states_to_processambda is always char 0
-    transitions: Vec<Vec<Vec<usize>>>,
+    transitions: Vec<Vec<Vec<usize>>>, // potentially refactor this to map?
     accepting_states: BTreeSet<usize>,
     character_map: HashMap<char, usize>,
 }
@@ -128,6 +128,7 @@ impl Nfa {
         let (first_line, rows_as_str) = all_rows.split_first().expect("Unable to parse input file");
 
         let char_map: HashMap<char, usize> = get_char_map(&first_line);
+        let num_states: usize = get_num_states(&first_line);
 
         println!("Char map: {:#?}", char_map);
 
@@ -146,32 +147,39 @@ impl Nfa {
             .collect();
         println!("Accepting state ids: {:#?}", accepting_state_from_ids);
 
-        let transitions: Vec<Vec<Vec<usize>>> = get_transitions(&rows, &char_map);
+        let transitions: Vec<Vec<Vec<usize>>> = get_transitions(&rows, &char_map, num_states);
 
         // Move this do different place? Not sure why it has to be here
 
         fn get_transitions(
             rows: &Vec<Row>,
             char_map: &HashMap<char, usize>,
+            num_states: usize,
         ) -> Vec<Vec<Vec<usize>>> {
+            // transition[start node][char][outgoing#] = end node
             let mut outer: Vec<Vec<Vec<usize>>> = Vec::new();
-
-            for row in rows {
-                let mut middle: Vec<Vec<usize>> = Vec::new();
-                let from_id = row.get_from_id();
-                let to_id = row.get_to_id();
-                for c in row.get_transitions() {
-                    let mut inner: Vec<usize> = Vec::new();
-                    println!(
-                        "char we are pushing: {} corosponding number: {} ",
-                        c,
-                        *char_map.get(c).unwrap()
-                    );
-                    inner.push(*char_map.get(c).unwrap());
+            for row_index in (0..num_states) {
+                let mut middle = Vec<Vec<usize>> = Vec::new();
+                for row in rows {
+                    if row.get_from_id() == row_index {
+                        for c in row.get_transitions() {
+                            
+                        }
+                    }
                 }
             }
 
             outer
+        }
+        fn get_num_states(first_lines: &String) -> usize {
+            first_lines
+                .split(' ')
+                .collect::<Vec<&str>>()
+                .into_iter()
+                .next()
+                .unwrap()
+                .parse()
+                .unwrap()
         }
         fn get_char_map(first_line: &String) -> HashMap<char, usize> {
             let alphabet_letters: Vec<&str> = first_line
