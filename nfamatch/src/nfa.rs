@@ -137,15 +137,23 @@ impl Nfa {
 
         let char_map = get_char_map(&first_line);
 
+        println!("Char map: {:#?}", char_map);
+
+        // Move this do different place? Not sure why it has to be here
         fn get_char_map(first_line: &String) -> HashMap<char, usize> {
-            let first_line_elements: Vec<&str> = first_line
+            let alphabet_letters: Vec<&str> = first_line
                 .split(' ')
                 .collect::<Vec<&str>>()
                 .into_iter()
-                .skip(2)
+                .skip(2) // Remove the first two chars (num cols and lambda char)
                 .collect();
 
-            return HashMap::new();
+            let mut map = HashMap::new();
+            for (i, v) in alphabet_letters.iter().enumerate() {
+                map.insert(v.parse().expect("Error while looking at alphabet"), i);
+            }
+
+            map
         }
 
         // This is an empty thing to please the compiler as I test
