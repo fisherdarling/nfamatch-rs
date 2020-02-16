@@ -26,6 +26,10 @@ impl Row {
     pub fn get_from_id(&self) -> usize {
         self.from_id
     }
+
+    pub fn get_transitions(&self) -> &Vec<char> {
+        &self.transitions
+    }
 }
 
 impl fmt::Display for Row {

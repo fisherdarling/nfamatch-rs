@@ -139,10 +139,21 @@ impl Nfa {
             .collect();
         println!("Rows as data: {:#?}", rows);
 
-        let accepting_states = rows.into_iter().filter(|r| r.get_accepting_state());
-        let accepting_state_from_id: BTreeSet<usize> =
-            BTreeSet::from_iter(accepting_states.map(|r| r.get_from_id()));
-        println!("Accepting state ids: {:#?}", accepting_state_from_id);
+        let accepting_state_from_ids: &Vec<usize> = &rows
+            .iter()
+            .filter(|r| r.get_accepting_state())
+            .map(|r| r.get_from_id().to_owned())
+            .collect();
+        println!("Accepting state ids: {:#?}", accepting_state_from_ids);
+
+        let mut transitions: Vec<Vec<Vec<usize>>> = Vec::new();
+        for row in rows.iter() {
+            let from_state: usize = row.get_from_id();
+
+            for c in row.get_transitions() {
+                println!("char in row.get_transitions(), {}", c);
+            }
+        }
 
         // Move this do different place? Not sure why it has to be here
         fn get_char_map(first_line: &String) -> HashMap<char, usize> {

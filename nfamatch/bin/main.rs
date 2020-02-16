@@ -20,6 +20,7 @@ struct Args {
     rest: Vec<String>,
 }
 
+// cargo run -- --file float.nfa --out out.dfa
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::from_args();
 
