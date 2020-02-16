@@ -12,10 +12,13 @@ use log::*;
 #[derive(Debug, Clone, StructOpt)]
 struct Args {
     /// Path to input file.
+    #[structopt(short, long)]
     file: PathBuf,
     /// Path to output DFA,
+    #[structopt(short, long)]
     out: PathBuf,
     /// Path to output the optimized DFA
+    #[structopt(short, long)]
     rest: Vec<String>,
 }
 
@@ -24,7 +27,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::from_args();
 
     info!("Creating NFA from: {}", args.file.display());
-    let nfa = Nfa::from_file(args.file);
+    let nfa = Nfa::from_file(args.file)?;
 
     info!("Opening output file: {}", args.out.display());
     let output_file = File::open(args.out)?;
