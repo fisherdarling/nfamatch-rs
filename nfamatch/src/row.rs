@@ -18,6 +18,14 @@ impl Row {
             transitions,
         }
     }
+
+    pub fn get_accepting_state(&self) -> bool {
+        self.accepting_state
+    }
+
+    pub fn get_from_id(&self) -> usize {
+        self.from_id
+    }
 }
 
 impl fmt::Display for Row {

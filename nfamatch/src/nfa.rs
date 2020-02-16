@@ -132,13 +132,18 @@ impl Nfa {
         println!("Char map: {:#?}", char_map);
 
         let rows: Vec<Row> = rows_as_str
-            .get(0..)
+            .get(0..) // take a look at this again, for some reason before it was getting the first line even though we split it earlier
             .unwrap()
             .iter()
             .map(|r| r.parse().unwrap())
             .collect();
-
         println!("Rows as data: {:#?}", rows);
+
+        let accepting_states = rows.into_iter().filter(|r| r.get_accepting_state());
+        let accepting_state_from_id: BTreeSet<usize> =
+            BTreeSet::from_iter(accepting_states.map(|r| r.get_from_id()));
+        println!("Accepting state ids: {:#?}", accepting_state_from_id);
+
         // Move this do different place? Not sure why it has to be here
         fn get_char_map(first_line: &String) -> HashMap<char, usize> {
             let alphabet_letters: Vec<&str> = first_line
