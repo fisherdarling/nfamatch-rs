@@ -108,7 +108,42 @@ impl Nfa {
         follow
     }
 
-    pub fn from_file<P: AsRef<Path>>(file: P) -> Self {
-        todo!()
+    pub fn from_file<P: AsRef<Path>>(path: P) -> Result<(Self), Box<dyn std::error::Error>> {
+        //        transitions: Vec<Vec<Vec<usize>>>,
+        //      accepting_states: BTreeSet<usize>,
+        //        character_map: HashMap<char, usize>,
+        let file = File::open(path)?;
+        println!("File : {:?}", file);
+        let reader = BufReader::new(file);
+
+        let all_rows: Vec<String> = reader
+            .lines()
+            .flatten()
+            .map(|r| r.parse().unwrap())
+            .collect();
+
+        println!("Rows as str: {:#?}", all_rows);
+
+        let (first_line, rows_as_str) = all_rows.split_first().expect("Unable to parse input file");
+
+        let char_map = get_char_map(&first_line);
+
+        fn get_char_map(first_line: &String) -> HashMap<char, usize> {
+            let first_line_elements: Vec<&str> = first_line
+                .split(' ')
+                .collect::<Vec<&str>>()
+                .into_iter()
+                .skip(2)
+                .collect();
+
+            return HashMap::new();
+        }
+
+        // This is an empty thing to please the compiler as I test
+        Ok(Self {
+            transitions: Vec::new(),
+            accepting_states: BTreeSet::new(),
+            character_map: HashMap::new(),
+        })
     }
 }

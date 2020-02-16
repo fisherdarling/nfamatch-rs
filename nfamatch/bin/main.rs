@@ -10,10 +10,13 @@ use dfa_optimizer::{Row, Table};
 #[derive(Debug, Clone, StructOpt)]
 struct Args {
     /// Path to input file.
+    #[structopt(short, long)]
     file: PathBuf,
     /// Path to output DFA,
+    #[structopt(short, long)]
     out: PathBuf,
     /// Path to output the optimized DFA
+    #[structopt(short, long)]
     rest: Vec<String>,
 }
 
@@ -24,7 +27,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut writer = BufWriter::new(output_file);
 
     // TODO: Read Rows and create separate NFA row type.
-    let nfa = Nfa::from_file(args.file);
+    let nfa: Nfa = Nfa::from_file(args.file).expect("Unable to read input file");
 
     let mut table = nfa.to_dfa();
     table.optimize();
