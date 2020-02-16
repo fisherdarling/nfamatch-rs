@@ -155,16 +155,21 @@ impl Nfa {
             .collect();
         println!("Accepting state ids: {:#?}", accepting_state_from_ids);
 
-        let mut transitions: Vec<Vec<Vec<usize>>> = Vec::new();
-        for row in rows.iter() {
-            let from_state: usize = row.get_from_id();
-
-            for c in row.get_transitions() {
-                println!("char in row.get_transitions(), {}", c);
-            }
-        }
+        let transitions: Vec<Vec<Vec<usize>>> = get_transitions(&rows);
 
         // Move this do different place? Not sure why it has to be here
+
+        fn get_transitions(rows: &Vec<Row>) -> Vec<Vec<Vec<usize>>> {
+            let mut temp: Vec<Vec<Vec<usize>>> = Vec::new();
+
+            for row in rows {
+                for c in row.get_transitions() {
+                    println!("char in row.get_transitions(), {}", c);
+                }
+            }
+
+            return temp;
+        }
         fn get_char_map(first_line: &String) -> HashMap<char, usize> {
             let alphabet_letters: Vec<&str> = first_line
                 .split(' ')
