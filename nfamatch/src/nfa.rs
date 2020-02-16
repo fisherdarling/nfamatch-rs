@@ -1,3 +1,4 @@
+use crate::row::Row;
 use dfa_optimizer::{Row as DfaRow, Table as DfaTable};
 use std::collections::{BTreeSet, HashMap};
 use std::fs::File;
@@ -130,6 +131,14 @@ impl Nfa {
 
         println!("Char map: {:#?}", char_map);
 
+        let rows: Vec<Row> = rows_as_str
+            .get(0..)
+            .unwrap()
+            .iter()
+            .map(|r| r.parse().unwrap())
+            .collect();
+
+        println!("Rows as data: {:#?}", rows);
         // Move this do different place? Not sure why it has to be here
         fn get_char_map(first_line: &String) -> HashMap<char, usize> {
             let alphabet_letters: Vec<&str> = first_line

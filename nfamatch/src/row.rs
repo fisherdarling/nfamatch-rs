@@ -4,15 +4,17 @@ use std::str::FromStr;
 #[derive(Debug, Default)]
 pub struct Row {
     accepting_state: bool,
-    pub id: usize,
+    from_id: usize,
+    to_id: usize,
     transitions: Vec<char>,
 }
 
 impl Row {
-    fn new(accepting_state: bool, id: usize, transitions: Vec<char>) -> Self {
+    fn new(accepting_state: bool, from_id: usize, to_id: usize, transitions: Vec<char>) -> Self {
         Self {
             accepting_state,
-            id,
+            from_id,
+            to_id,
             transitions,
         }
     }
@@ -29,16 +31,22 @@ impl FromStr for Row {
     type Err = !;
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
-        let tokens: Vec<&str> = input.split(" ").collect();
+        let tokens: Vec<&str> = input.trim().split(" ").collect();
 
         match tokens.as_slice() {
-            [accept, id, transitions @ ..] => {
+            [accept, from_id, to_id, transitions @ ..] => {
                 let is_accept = *accept == "+";
-                let id = id.parse().unwrap();
-                let transitions: Vec<char> =
-                    transitions.iter().map(|s| s.parse().unwrap()).collect();
+                let from_id = from_id.parse().unwrap();
+                let to_id = to_id.parse().unwrap();
+                let transitions: Vec<char> = transitions
+                    .iter()
+                    .map(|s| {
+                        //println!("Trying to parse s: {}", s);
+                        s.parse().unwrap()
+                    })
+                    .collect();
 
-                Ok(Row::new(is_accept, id, transitions))
+                Ok(Row::new(is_accept, from_id, to_id, transitions))
             }
             _ => unreachable!(),
         }
