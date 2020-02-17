@@ -6,6 +6,7 @@ use std::path::PathBuf;
 use structopt::StructOpt;
 
 use dfa_optimizer::{Row, Table};
+use log::*;
 
 use log::*;
 
@@ -27,29 +28,25 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let _ = env_logger::try_init();
     let args = Args::from_args();
 
-    info!("Creating NFA from: {}", args.file.display());
-    let nfa = Nfa::from_file(args.file)?;
-
-    info!("Opening output file: {}", args.out.display());
-    let output_file = File::open(args.out)?;
-    let mut writer = BufWriter::new(output_file);
-
-    info!("Creating DFA");
+    // TODO: Read Rows and create separate NFA row type.
+    info!("Creating NFA table from: {}", args.file.display());
+    let nfa: Nfa = Nfa::from_file(args.file)?;
     let mut table = nfa.to_dfa();
-
-    info!("Optimizing DFA");
+    info!("Optimizing DFA table");
     table.optimize();
 
-    info!("Matching input tokens");
+    info!("Checking tokens");
     for input in args.rest {
-        debug!("TOKEN: {}", input);
+        info!("Checking `{}`", input);
         match table.does_match(&input, nfa.character_map()) {
             None => println!("OUTPUT :M:"),
             Some(i) => println!("OUTPUT {}", i),
         }
     }
 
-    info!("Writing NFA to output file");
+    info!("Writing output file: {}", args.out.display());
+    let output_file = File::create(args.out)?;
+    let mut writer = BufWriter::new(output_file);
     for row in table.rows() {
         writeln!(writer, "{}", row)?;
     }
