@@ -25,6 +25,10 @@ impl Nfa {
         todo!()
     }
 
+    pub fn lambda_char(&self) -> char {
+        self.lambda_char
+    }
+
     pub fn character_map(&self) -> &BTreeMap<char, usize> {
         &self.character_map
     }
