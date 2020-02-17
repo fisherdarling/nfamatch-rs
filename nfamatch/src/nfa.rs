@@ -9,6 +9,8 @@ use std::path::Path;
 use log::debug;
 
 pub type StateSet = BTreeSet<usize>;
+
+#[derive(Debug, Clone, Default)]
 pub struct Nfa {
     // transition[start node][char][outgoing#] = end node
     // Starting state is always node 0
@@ -126,90 +128,77 @@ impl Nfa {
         println!("File : {:?}", file);
         let reader = BufReader::new(file);
 
-        let all_rows: Vec<String> = reader
-            .lines()
-            .flatten()
-            .map(|r| r.parse().unwrap())
-            .collect();
+        let mut all_rows = reader.lines().flatten();
+        let first_line = all_rows.next().unwrap();
 
         println!("Rows as str: {:#?}", all_rows);
 
-        let (first_line, rows_as_str) = all_rows.split_first().expect("Unable to parse input file");
-
-        let char_map: HashMap<char, usize> = get_char_map(&first_line);
+        let character_map: HashMap<char, usize> = get_char_map(&first_line);
         let num_states: usize = get_num_states(&first_line);
 
-        println!("Char map: {:#?}", char_map);
+        let rows: Vec<Row> = all_rows.map(|r| r.parse().unwrap()).collect();
 
-        let rows: Vec<Row> = rows_as_str
-            .get(0..) // take a look at this again, for some reason before it was getting the first line even though we split it earlier
-            .unwrap()
-            .iter()
-            .map(|r| r.parse().unwrap())
-            .collect();
         println!("Rows as data: {:#?}", rows);
 
-        let accepting_state_from_ids: &Vec<usize> = &rows
+        let accepting_state_from_ids: Vec<usize> = rows
             .iter()
             .filter(|r| r.get_accepting_state())
             .map(|r| r.get_from_id().to_owned())
             .collect();
+
         println!("Accepting state ids: {:#?}", accepting_state_from_ids);
 
-        let transitions: Vec<Vec<Vec<usize>>> = get_transitions(&rows, &char_map, num_states);
-
-        // Move this do different place? Not sure why it has to be here
-
-        fn get_transitions(
-            rows: &Vec<Row>,
-            char_map: &HashMap<char, usize>,
-            num_states: usize,
-        ) -> Vec<Vec<Vec<usize>>> {
-            // transition[start node][char][outgoing#] = end node
-            let mut outer: Vec<Vec<Vec<usize>>> =
-                vec![vec![Vec::new(); char_map.len()]; num_states];
-            for row in rows {
-                let from_index = row.get_from_id();
-                let to_index = row.get_to_id();
-                for c in row.get_transitions() {
-                    let char_index = char_map[c];
-                    outer[from_index][char_index].push(to_index);
-                }
-            }
-            // println!("outer: {#?}")
-            dbg!(outer)
-        }
-        fn get_num_states(first_lines: &String) -> usize {
-            first_lines
-                .split(' ')
-                .collect::<Vec<&str>>()
-                .into_iter()
-                .next()
-                .unwrap()
-                .parse()
-                .unwrap()
-        }
-        fn get_char_map(first_line: &String) -> HashMap<char, usize> {
-            let alphabet_letters: Vec<&str> = first_line
-                .split(' ')
-                .collect::<Vec<&str>>()
-                .into_iter()
-                .skip(1) // Remove the first two chars (num cols and lambda char)
-                .collect();
-
-            let mut map = HashMap::new();
-            for (i, v) in alphabet_letters.iter().enumerate() {
-                map.insert(v.parse().expect("Error while looking at alphabet"), i);
-            }
-
-            map
-        }
+        let transitions: Vec<Vec<Vec<usize>>> = get_transitions(&rows, &character_map, num_states);
 
         // This is an empty thing to please the compiler as I test
         Ok(Self {
-            transitions: Vec::new(),
-            accepting_states: BTreeSet::new(),
-            character_map: HashMap::new(),
+            transitions,
+            character_map,
+            accepting_states: BTreeSet::from_iter(accepting_state_from_ids),
         })
     }
+}
+
+fn get_transitions(
+    rows: &[Row],
+    char_map: &HashMap<char, usize>,
+    num_states: usize,
+) -> Vec<Vec<Vec<usize>>> {
+    // transition[start node][char][outgoing#] = end node
+    let mut outer: Vec<Vec<Vec<usize>>> = vec![vec![Vec::new(); char_map.len()]; num_states];
+    for row in rows {
+        let from_index = row.get_from_id();
+        let to_index = row.get_to_id();
+        for c in row.get_transitions() {
+            let char_index = char_map[c];
+            outer[from_index][char_index].push(to_index);
+        }
+    }
+    // println!("outer: {#?}")
+    dbg!(outer)
+}
+fn get_num_states(first_lines: &String) -> usize {
+    first_lines
+        .split(' ')
+        .collect::<Vec<&str>>()
+        .into_iter()
+        .next()
+        .unwrap()
+        .parse()
+        .unwrap()
+}
+fn get_char_map(first_line: &String) -> HashMap<char, usize> {
+    let alphabet_letters: Vec<&str> = first_line
+        .split(' ')
+        .collect::<Vec<&str>>()
+        .into_iter()
+        .skip(1) // Remove the first two chars (num cols and lambda char)
+        .collect();
+
+    let mut map = HashMap::new();
+    for (i, v) in alphabet_letters.iter().enumerate() {
+        map.insert(v.parse().expect("Error while looking at alphabet"), i);
+    }
+
+    map
 }
