@@ -28,7 +28,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut writer = BufWriter::new(output_file);
 
     // TODO: Read Rows and create separate NFA row type.
-    let nfa: Nfa = Nfa::from_file(args.file).expect("Unable to read input file");
+    let nfa: Nfa = Nfa::from_file(args.file)?;
 
     let mut table = nfa.to_dfa();
     table.optimize();

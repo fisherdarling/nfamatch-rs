@@ -157,19 +157,18 @@ impl Nfa {
             num_states: usize,
         ) -> Vec<Vec<Vec<usize>>> {
             // transition[start node][char][outgoing#] = end node
-            let mut outer: Vec<Vec<Vec<usize>>> = Vec::new();
-            for row_index in (0..num_states) {
-                let mut middle = Vec<Vec<usize>> = Vec::new();
-                for row in rows {
-                    if row.get_from_id() == row_index {
-                        for c in row.get_transitions() {
-                            
-                        }
-                    }
+            let mut outer: Vec<Vec<Vec<usize>>> =
+                vec![vec![Vec::new(); char_map.len()]; num_states];
+            for row in rows {
+                let from_index = row.get_from_id();
+                let to_index = row.get_to_id();
+                for c in row.get_transitions() {
+                    let char_index = char_map[c];
+                    outer[from_index][char_index].push(to_index);
                 }
             }
-
-            outer
+            // println!("outer: {#?}")
+            dbg!(outer)
         }
         fn get_num_states(first_lines: &String) -> usize {
             first_lines
