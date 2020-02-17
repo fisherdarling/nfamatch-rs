@@ -1,7 +1,9 @@
 #![allow(non_snake_case)]
 use nfamatch::Nfa;
+use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::{BufWriter, Write};
+use std::iter::FromIterator;
 use std::path::PathBuf;
 use structopt::StructOpt;
 
@@ -35,10 +37,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!("Optimizing DFA table");
     table.optimize();
 
+    let dfa_char_map = BTreeMap::from_iter(
+        nfa.character_map()
+            .iter()
+            .filter(|(c, _)| **c != nfa.lambda_char())
+            .map(|(c, i)| (*c, i - 1)),
+    );
     info!("Checking tokens");
     for input in args.rest {
         info!("Checking `{}`", input);
-        match table.does_match(&input, nfa.character_map()) {
+        match table.does_match(&input, &dfa_char_map) {
             None => println!("OUTPUT :M:"),
             Some(i) => println!("OUTPUT {}", i),
         }
