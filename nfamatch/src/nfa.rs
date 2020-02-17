@@ -13,6 +13,7 @@ pub struct Nfa {
     // transition[start node][char][outgoing#] = end node
     // Starting state is always node 0
     // states_to_processambda is always char 0
+    lambda_char: char,
     transitions: Vec<Vec<Vec<usize>>>, // potentially refactor this to map?
     accepting_states: BTreeSet<usize>,
     character_map: HashMap<char, usize>,
@@ -28,7 +29,10 @@ impl Nfa {
     }
 
     pub fn to_dfa(&self) -> DfaTable {
-        let alpha_len = self.character_map.len() - 1;
+        let mut dfa_char_map = self.character_map().clone();
+        dfa_char_map.remove(&self.lambda_char);
+        let alpha_len = dfa_char_map.len(); // length of the new dfa alphabet
+
         let mut table = DfaTable::blank_table(alpha_len);
         let mut seen_states: HashMap<StateSet, usize> = HashMap::new();
         let mut row_number = 0;
@@ -47,7 +51,7 @@ impl Nfa {
         row_number += 1;
 
         while let Some(next_state_to_process) = states_to_process.pop() {
-            for character in self.character_map.values() {
+            for character in dfa_char_map.values() {
                 let lambda_closure =
                     self.follow_lambda(&self.follow_char(&next_state_to_process, *character));
                 let lambda_clone = lambda_closure.clone();
@@ -70,7 +74,7 @@ impl Nfa {
 
                 let current_row = seen_states[&next_state_to_process];
                 let transition = seen_states[&lambda_clone];
-                table[current_row][*character] = Some(transition);
+                table[current_row][*character - 1] = Some(transition);
             }
         }
 
@@ -124,7 +128,7 @@ impl Nfa {
 
         println!("Rows as str: {:#?}", all_rows);
 
-        let character_map: HashMap<char, usize> = get_char_map(&first_line);
+        let (character_map, lambda_char) = get_char_map(&first_line);
         let num_states: usize = get_num_states(&first_line);
 
         let rows: Vec<Row> = all_rows.map(|r| r.parse().unwrap()).collect();
@@ -143,6 +147,7 @@ impl Nfa {
 
         // This is an empty thing to please the compiler as I test
         Ok(Self {
+            lambda_char,
             transitions,
             character_map,
             accepting_states: BTreeSet::from_iter(accepting_state_from_ids),
@@ -168,7 +173,7 @@ fn get_transitions(
     // println!("outer: {#?}")
     dbg!(outer)
 }
-fn get_num_states(first_lines: &String) -> usize {
+fn get_num_states(first_lines: &str) -> usize {
     first_lines
         .split(' ')
         .collect::<Vec<&str>>()
@@ -178,18 +183,16 @@ fn get_num_states(first_lines: &String) -> usize {
         .parse()
         .unwrap()
 }
-fn get_char_map(first_line: &String) -> HashMap<char, usize> {
+fn get_char_map(first_line: &str) -> (HashMap<char, usize>, char) {
     let alphabet_letters: Vec<&str> = first_line
         .split(' ')
-        .collect::<Vec<&str>>()
-        .into_iter()
-        .skip(1) // Remove the first two chars (num cols and lambda char)
+        .skip(1) // skip num of states
         .collect();
-
+    let lambda_char = alphabet_letters[0].parse().unwrap();
     let mut map = HashMap::new();
     for (i, v) in alphabet_letters.iter().enumerate() {
         map.insert(v.parse().expect("Error while looking at alphabet"), i);
     }
 
-    map
+    (map, lambda_char)
 }
