@@ -6,6 +6,7 @@ use std::path::PathBuf;
 use structopt::StructOpt;
 
 use dfa_optimizer::{Row, Table};
+use log::*;
 
 #[derive(Debug, Clone, StructOpt)]
 struct Args {
@@ -22,24 +23,28 @@ struct Args {
 
 // cargo run -- --file float.nfa --out out.dfa
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let _ = env_logger::try_init();
     let args = Args::from_args();
 
-    let output_file = File::open(args.out)?;
-    let mut writer = BufWriter::new(output_file);
-
     // TODO: Read Rows and create separate NFA row type.
+    info!("Creating NFA table from: {}", args.file.display());
     let nfa: Nfa = Nfa::from_file(args.file)?;
-
     let mut table = nfa.to_dfa();
+    info!("Optimizing DFA table");
     table.optimize();
 
+    info!("Checking tokens");
     for input in args.rest {
+        info!("Checking `{}`", input);
         match table.does_match(&input, nfa.character_map()) {
             None => println!("OUTPUT :M:"),
             Some(i) => println!("OUTPUT {}", i),
         }
     }
 
+    info!("Writing output file: {}", args.out.display());
+    let output_file = File::create(args.out)?;
+    let mut writer = BufWriter::new(output_file);
     for row in table.rows() {
         writeln!(writer, "{}", row)?;
     }
