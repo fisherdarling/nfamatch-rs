@@ -6,7 +6,7 @@ use structopt::StructOpt;
 
 use dfa_optimizer::{Row, Table};
 
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 /// dfa reads in a formatted DFA file and spits
 /// out an optimized form of given DFA.
@@ -57,7 +57,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     // args.alphabet.sort();
-    let mut mapping = HashMap::new();
+    let mut mapping = BTreeMap::new();
 
     for (i, c) in args.alphabet.iter().enumerate() {
         mapping.insert(c.clone(), i);
