@@ -10,6 +10,8 @@ use structopt::StructOpt;
 use dfa_optimizer::{Row, Table};
 use log::*;
 
+use log::*;
+
 #[derive(Debug, Clone, StructOpt)]
 struct Args {
     /// Path to input file.

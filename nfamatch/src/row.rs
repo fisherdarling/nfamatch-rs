@@ -44,7 +44,7 @@ impl fmt::Display for Row {
 }
 
 impl FromStr for Row {
-    type Err = !;
+    type Err = ();
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         let tokens: Vec<&str> = input.trim().split(" ").collect();

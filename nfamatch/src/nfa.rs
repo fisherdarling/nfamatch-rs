@@ -7,6 +7,8 @@ use std::io::{BufRead, BufReader};
 use std::iter::FromIterator;
 use std::path::Path;
 
+use log::debug;
+
 pub type StateSet = BTreeSet<usize>;
 
 #[derive(Debug, Clone, Default)]
@@ -50,6 +52,8 @@ impl Nfa {
 
         initial_state.insert(0); // insert starting node
         initial_state = self.follow_lambda(&initial_state);
+        debug!("Initial Lambda Closure: {:?}", initial_state);
+
         let new_row = DfaRow::blank_row(false, row_number, alpha_len);
         dfa_rows.push(new_row);
         seen_states.insert(initial_state.clone(), row_number);
@@ -57,9 +61,13 @@ impl Nfa {
         row_number += 1;
 
         while let Some(next_state_to_process) = states_to_process.pop() {
+            debug!("Next State: {:?}", next_state_to_process);
             for character in dfa_char_map.values() {
                 let lambda_closure =
                     self.follow_lambda(&self.follow_char(&next_state_to_process, *character));
+                debug!("{} => {:?}", character, lambda_closure);
+
+
                 let lambda_clone = lambda_closure.clone();
 
                 if !seen_states.contains_key(&lambda_closure) {

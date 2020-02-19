@@ -1,10 +1,6 @@
-#![feature(never_type)]
-
 pub mod nfa;
-pub mod row;
-pub mod table;
-
 pub use nfa::Nfa;
+pub mod row;
 
 #[cfg(test)]
 mod tests {
