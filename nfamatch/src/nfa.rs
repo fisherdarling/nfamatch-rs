@@ -42,7 +42,6 @@ impl Nfa {
         let alpha_len = dfa_char_map.len(); // length of the new dfa alphabet
 
         let mut dfa_rows = Vec::new();
-        // let mut table = DfaTable::blank_table(alpha_len);
         let mut seen_states: BTreeMap<StateSet, usize> = BTreeMap::new();
         let mut row_number = 0;
 
@@ -130,24 +129,16 @@ impl Nfa {
     }
 
     pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, Box<dyn std::error::Error>> {
-        //        transitions: Vec<Vec<Vec<usize>>>,
-        //      accepting_states: BTreeSet<usize>,
-        //        character_map: BTreeMap<char, usize>,
         let file = File::open(path)?;
-        // println!("File : {:?}", file);
         let reader = BufReader::new(file);
 
         let mut all_rows = reader.lines().flatten();
         let first_line = all_rows.next().unwrap();
 
-        // println!("Rows as str: {:#?}", all_rows);
-
         let (character_map, lambda_char) = get_char_map(&first_line);
         let num_states: usize = get_num_states(&first_line);
 
         let rows: Vec<Row> = all_rows.map(|r| r.parse().unwrap()).collect();
-
-        // println!("Rows as data: {:#?}", rows);
 
         let accepting_state_from_ids: Vec<usize> = rows
             .iter()
@@ -155,11 +146,8 @@ impl Nfa {
             .map(|r| r.get_from_id().to_owned())
             .collect();
 
-        // println!("Accepting state ids: {:#?}", accepting_state_from_ids);
-
         let transitions: Vec<Vec<Vec<usize>>> = get_transitions(&rows, &character_map, num_states);
 
-        // This is an empty thing to please the compiler as I test
         Ok(Self {
             lambda_char,
             transitions,
@@ -174,7 +162,6 @@ fn get_transitions(
     char_map: &BTreeMap<char, usize>,
     num_states: usize,
 ) -> Vec<Vec<Vec<usize>>> {
-    // transition[start node][char][outgoing#] = end node
     let mut outer: Vec<Vec<Vec<usize>>> = vec![vec![Vec::new(); char_map.len()]; num_states];
     for row in rows {
         let from_index = row.get_from_id();
@@ -184,7 +171,6 @@ fn get_transitions(
             outer[from_index][char_index].push(to_index);
         }
     }
-    // println!("outer: {#?}")
     outer
 }
 fn get_num_states(first_lines: &str) -> usize {
