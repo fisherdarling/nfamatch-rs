@@ -12,6 +12,8 @@
 // - 4 4 8 6
 // + 8 1 1 1
 
+use std::iter::FromIterator;
+
 use log::*;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
@@ -23,25 +25,24 @@ pub type State = BTreeSet<usize>;
 pub type Alphabet = Vec<usize>;
 
 pub struct Table {
-    alpha_assignments: Vec<usize>,
+    row_assignments: Vec<usize>,
     rows: Vec<Row>,
 }
 
 impl Table {
-    pub fn new(rows: Vec<Row>, alpha: usize) -> Self {
-        debug!("Table new alpha: {}", alpha);
-        let alpha_assignments = (0..alpha).collect();
+    pub fn new(rows: Vec<Row>, num_rows: usize) -> Self {
+        let row_assignments = (0..num_rows).collect();
         Self {
             rows,
-            alpha_assignments,
+            row_assignments,
         }
     }
 
     pub fn blank_table(size_of_alpha: usize) -> Self {
-        let alpha_assignments = (0..size_of_alpha).collect();
+        let row_assignments = (0..size_of_alpha).collect();
         Self {
             rows: Vec::new(),
-            alpha_assignments,
+            row_assignments,
         }
     }
 
@@ -62,11 +63,22 @@ impl Table {
     }
 
     pub fn does_match(&self, input: &str, mapping: &BTreeMap<char, usize>) -> Option<usize> {
-        debug!("running does match on input: {}", input);
+        debug!("running does match on input: {:?}", input);
+        if self.rows.is_empty() {
+            debug!("rows are empty");
+            return Some(0);
+        }
+        
+        if input.is_empty() && !self.rows[0].is_accepting() {
+            debug!("accepting empty state");
+            return Some(0);
+        }
+        
         let mut current_state = 0;
         let mut chars = input.char_indices();
 
         while let Some((n, character)) = chars.next() {
+            debug!("{:?}", (n, character));
             let transition = mapping.get(&character);
 
             if let Some(&transition) = transition {
@@ -99,17 +111,17 @@ impl Table {
 
         // Deal with borrows.
         let Self {
-            alpha_assignments,
+            row_assignments,
             rows,
         } = self;
 
-        debug!("Alpha assigns after optimize {:?}", alpha_assignments);
+        debug!("Alpha assigns after optimize {:?}", row_assignments);
 
         // Update all assignments to reflect reality.
         for row in rows {
             for data in row.transitions_mut() {
                 if let Some(idx) = data {
-                    *idx = alpha_assignments[*idx];
+                    *idx = row_assignments[*idx];
                 }
             }
         }
@@ -119,6 +131,10 @@ impl Table {
 
     fn optimize_step(&mut self) -> bool {
         info!("optimize step");
+
+        info!("remove dead states");
+        self.remove_dead_states();
+
         // Alpha is just a lookup table for our index optimization.
         let alpha: Alphabet = (0..self[0].transitions().len()).collect();
         info!("Alphabet: {:?}", alpha);
@@ -132,7 +148,8 @@ impl Table {
         // Starting state, just partition based off of accepting
         // and not accepting states.
         info!("Partitioning states");
-        info!("Alpha assignments: {:?}", self.alpha_assignments);
+        info!("Alpha assignments: {:?}", self.row_assignments);
+
         let (accepting_states, na_states): (State, State) = self
             .rows()
             .iter()
@@ -145,30 +162,35 @@ impl Table {
         stack.push((na_states, 0));
 
         while let Some((state, idx)) = stack.pop() {
-            if let Some(c) = alpha.get(idx).copied() {
-                let mut agg: BTreeMap<Option<usize>, State> = BTreeMap::new();
+            debug!("char: {}, state: {:?}", idx, state);
 
-                debug!("State: {:?}", state);
-                debug!("Character: {}", c);
-                for s in state {
-                    let row = &self[s];
-                    debug!("Current state: {:?}", s);
-                    debug!("Current row: \n {}", row);
-                    debug!("Character inside s in state: {}", c);
-                    let transition = row[c];
-                    debug!("Transition: {:?}", transition);
-                    let transition = transition.map(|i| self.alpha_assignments[i]);
-                    agg.entry(transition).or_default().insert(s);
-                }
+            let mut character_aggregate: BTreeMap<Option<usize>, State> = BTreeMap::new();
 
-                for (_, state) in agg.into_iter().filter(|(_, s)| s.len() > 1) {
-                    if c + 1 >= alpha.len() {
-                        merge_set.insert(state);
-                    } else {
-                        stack.push((state, idx + 1));
-                    }
+            debug!("Aggregating States on: {}", idx);
+            for s in state {
+                // debug!("[state: {}] row: \n{}", s, &self[s]);
+
+                let transition = self[s][idx].map(|i| self.row_assignments[i]);
+                character_aggregate.entry(transition).or_default().insert(s);
+            }
+
+            debug!("Aggregates:");
+
+            for (key, value) in character_aggregate.iter() {
+                debug!("{:?} => {:?}", key, value);
+            }
+
+            for (_, state) in character_aggregate.into_iter().filter(|(_, s)| s.len() > 1) {
+                if idx + 1 >= alpha.len() {
+                    debug!("Merging: {:?}", state);
+                    merge_set.insert(state);
+                } else {
+                    debug!("Pushing: {:?}", state);
+                    stack.push((state, idx + 1));
                 }
             }
+
+            debug!("");
         }
 
         // println!("{:?}", merge_set);
@@ -181,26 +203,73 @@ impl Table {
         ret
     }
 
+    pub fn remove_dead_states(&mut self) {
+        let mut marked: BTreeSet<usize> = BTreeSet::new();
+
+        // Fully self-referential states
+        marked.extend(
+            self.rows()
+                .iter()
+                .filter(|r| !r.is_accepting() && r.transitions().iter().all(|t| *t == Some(r.id)))
+                .map(|r| r.id),
+        );
+
+        // States with no transitions
+        marked.extend(
+            self.rows()
+                .iter()
+                .filter(|r| !r.is_accepting() && r.transitions().iter().all(Option::is_none))
+                .map(|r| r.id),
+        );
+
+        // Remove all dead states in marked
+        for state in marked {
+            debug!("Removing {:?}", self.rows[state]);
+
+            self.rows.remove(state);
+
+            for row in self.rows_mut() {
+                // Update row ids due to removal
+                if row.id > state {
+                    row.id -= 1;
+                }
+
+                // Remove all transitions that reference this state
+                for transition in row.transitions_mut() {
+                    if *transition == Some(state) {
+                        *transition = None;
+                    } else if let Some(t) = transition {
+                        // Modify all states greater than two
+                        if *t > state {
+                            *t -= 1;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     pub fn merge(&mut self, state: State) {
         debug!("Merging state: {:#?}", state);
-        debug!("Alpha assigns before merge: {:?}", self.alpha_assignments);
-        debug!("Transition table before merge: \n{}", self);
+        debug!("Alpha assigns before merge: {:?}", self.row_assignments);
+        debug!("Table before merge: \n{}", self);
         let mut states: Vec<usize> = state.into_iter().collect();
 
         while states.len() > 1 {
-            let to_remove = states.pop().unwrap();
-            let to_keep = states.pop().unwrap();
-            debug!("To Remove: {:?}", to_remove);
-            debug!("To keep: {:?}", to_keep);
+            let to_remove = self.row_assignments[states.pop().unwrap()];
+            let to_keep = self.row_assignments[states.pop().unwrap()];
+            // debug!("To Remove: {:?}", to_remove);
+            // debug!("To keep: {:?}", to_keep);
             self.merge_two(to_keep, to_remove);
-            debug!(
-                "Alpha assigns after merging of two states: {:?}",
-                self.alpha_assignments
-            );
+            // debug!(
+            //     "Alpha assigns after merging of two states: {:?}",
+            //     self.row_assignments
+            // );
             states.push(to_keep);
         }
 
-        debug!("Alpha assigns after merge: {:?}", self.alpha_assignments);
+        debug!("Alpha assigns after merge: {:?}", self.row_assignments);
+        debug!("Table after merge: \n{}", self);
     }
 
     // TODO comment this code
@@ -209,7 +278,7 @@ impl Table {
         self.rows[to_keep].set_accepting(is_accepting);
 
         self.rows.remove(to_remove);
-        for t in self.alpha_assignments.iter_mut() {
+        for t in self.row_assignments.iter_mut() {
             if *t == to_remove {
                 *t = to_keep;
             } else if *t > to_remove {

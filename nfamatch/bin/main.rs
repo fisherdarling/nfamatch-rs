@@ -15,13 +15,13 @@ use log::*;
 #[derive(Debug, Clone, StructOpt)]
 struct Args {
     /// Path to input file.
-    #[structopt(short, long)]
+    // #[structopt(short, long)]
     file: PathBuf,
     /// Path to output DFA,
-    #[structopt(short, long)]
+    // #[structopt(short, long)]
     out: PathBuf,
     /// Path to output the optimized DFA
-    #[structopt(short, long)]
+    // #[structopt(short, long)]
     rest: Vec<String>,
 }
 

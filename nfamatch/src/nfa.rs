@@ -67,7 +67,6 @@ impl Nfa {
                     self.follow_lambda(&self.follow_char(&next_state_to_process, *character));
                 debug!("{} => {:?}", character, lambda_closure);
 
-
                 let lambda_clone = lambda_closure.clone();
 
                 if !seen_states.contains_key(&lambda_closure) {
@@ -130,7 +129,7 @@ impl Nfa {
         follow
     }
 
-    pub fn from_file<P: AsRef<Path>>(path: P) -> Result<(Self), Box<dyn std::error::Error>> {
+    pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, Box<dyn std::error::Error>> {
         //        transitions: Vec<Vec<Vec<usize>>>,
         //      accepting_states: BTreeSet<usize>,
         //        character_map: BTreeMap<char, usize>,
