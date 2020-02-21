@@ -31,7 +31,7 @@ struct Args {
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let _ = env_logger::try_init();
-    let mut args = Args::from_args();
+    let args = Args::from_args();
 
     let file = File::open(args.file)?;
     let reader = BufReader::new(file);

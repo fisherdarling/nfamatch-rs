@@ -37,7 +37,7 @@ impl Row {
 }
 
 impl fmt::Display for Row {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, _f: &mut fmt::Formatter) -> fmt::Result {
         // writeln!(f, "{}", something)...
         todo!()
     }

@@ -7,10 +7,10 @@ use std::iter::FromIterator;
 use std::path::PathBuf;
 use structopt::StructOpt;
 
-use dfa_optimizer::{Row, Table};
-use log::*;
 
 use log::*;
+
+
 
 #[derive(Debug, Clone, StructOpt)]
 struct Args {
