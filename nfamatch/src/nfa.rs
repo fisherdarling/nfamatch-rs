@@ -15,7 +15,6 @@ pub type StateSet = BTreeSet<usize>;
 pub struct Nfa {
     // transition[start node][char][outgoing#] = end node
     // Starting state is always node 0
-    // states_to_processambda is always char 0
     lambda_char: char,
     transitions: Vec<Vec<Vec<usize>>>, // potentially refactor this to map?
     accepting_states: BTreeSet<usize>,
@@ -190,6 +189,7 @@ fn get_char_map(first_line: &str) -> (BTreeMap<char, usize>, char) {
         .collect();
     let lambda_char = alphabet_letters[0].parse().unwrap();
     let mut map = BTreeMap::new();
+
     for (i, v) in alphabet_letters.iter().enumerate() {
         map.insert(v.parse().expect("Error while looking at alphabet"), i);
     }

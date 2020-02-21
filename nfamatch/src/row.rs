@@ -36,13 +36,6 @@ impl Row {
     }
 }
 
-impl fmt::Display for Row {
-    fn fmt(&self, _f: &mut fmt::Formatter) -> fmt::Result {
-        // writeln!(f, "{}", something)...
-        todo!()
-    }
-}
-
 impl FromStr for Row {
     type Err = ();
 
@@ -54,13 +47,8 @@ impl FromStr for Row {
                 let is_accept = *accept == "+";
                 let from_id = from_id.parse().unwrap();
                 let to_id = to_id.parse().unwrap();
-                let transitions: Vec<char> = transitions
-                    .iter()
-                    .map(|s| {
-                        //println!("Trying to parse s: {}", s);
-                        s.parse().unwrap()
-                    })
-                    .collect();
+                let transitions: Vec<char> =
+                    transitions.iter().map(|s| s.parse().unwrap()).collect();
 
                 Ok(Row::new(is_accept, from_id, to_id, transitions))
             }

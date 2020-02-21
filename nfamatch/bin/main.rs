@@ -7,10 +7,7 @@ use std::iter::FromIterator;
 use std::path::PathBuf;
 use structopt::StructOpt;
 
-
 use log::*;
-
-
 
 #[derive(Debug, Clone, StructOpt)]
 struct Args {

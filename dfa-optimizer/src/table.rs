@@ -12,8 +12,6 @@
 // - 4 4 8 6
 // + 8 1 1 1
 
-
-
 use log::*;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
@@ -68,12 +66,12 @@ impl Table {
             debug!("rows are empty");
             return Some(0);
         }
-        
+
         if input.is_empty() && !self.rows[0].is_accepting() {
             debug!("accepting empty state");
             return Some(0);
         }
-        
+
         let mut current_state = 0;
         let mut chars = input.char_indices();
 
