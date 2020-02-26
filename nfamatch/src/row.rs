@@ -27,8 +27,16 @@ impl Row {
         self.from_id
     }
 
+    pub fn set_from_id(&mut self, value: usize) {
+        self.from_id = value;
+    }
+
     pub fn get_to_id(&self) -> usize {
         self.to_id
+    }
+
+    pub fn set_to_id(&mut self, value: usize) {
+        self.to_id = value;
     }
 
     pub fn get_transitions(&self) -> &Vec<char> {

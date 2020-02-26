@@ -137,7 +137,8 @@ impl Nfa {
         let (character_map, lambda_char) = get_char_map(&first_line);
         let num_states: usize = get_num_states(&first_line);
 
-        let rows: Vec<Row> = all_rows.map(|r| r.parse().unwrap()).collect();
+        let mut rows: Vec<Row> = all_rows.map(|r| r.parse().unwrap()).collect();
+        sanitize_rows(&mut rows);
 
         let accepting_state_from_ids: Vec<usize> = rows
             .iter()
@@ -153,6 +154,29 @@ impl Nfa {
             character_map,
             accepting_states: BTreeSet::from_iter(accepting_state_from_ids),
         })
+    }
+}
+
+fn sanitize_rows(rows: &mut Vec<Row>){
+    let mut state_map: BTreeMap<usize,usize> = BTreeMap::new();
+    state_map.insert(0,0); // Start node is ALWAYS 0
+
+    for row in rows.iter() {
+        let from_index = row.get_from_id();
+        let to_index = row.get_to_id();
+        if !state_map.contains_key(&from_index) {
+            state_map.insert(from_index, state_map.len());
+        }
+        if !state_map.contains_key(&to_index) {
+            state_map.insert(to_index, state_map.len());
+        }
+    }
+
+    for row in rows {
+        let from_index = state_map.get(&row.get_from_id()).unwrap();
+        let to_index = state_map.get(&row.get_to_id()).unwrap();
+        row.set_from_id(*from_index);
+        row.set_to_id(*to_index);
     }
 }
 
