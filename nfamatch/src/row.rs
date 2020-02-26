@@ -40,7 +40,7 @@ impl FromStr for Row {
     type Err = ();
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
-        let tokens: Vec<&str> = input.trim().split(" ").collect();
+        let tokens: Vec<&str> = input.trim().split_whitespace().collect();
 
         match tokens.as_slice() {
             [accept, from_id, to_id, transitions @ ..] => {
