@@ -13,7 +13,7 @@
 // + 8 1 1 1
 
 use log::*;
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::{BTreeMap, BTreeSet, BinaryHeap};
 use std::fmt;
 use std::ops::{Index, IndexMut};
 
@@ -199,6 +199,9 @@ impl Table {
         }
 
         ret
+    }
+    pub fn remove_dead_branches(&mut self) {
+        let mut marked: BinaryHeap<usize> = BinaryHeap::new();
     }
 
     pub fn remove_dead_states(&mut self) {
