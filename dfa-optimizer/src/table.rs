@@ -255,6 +255,9 @@ impl Table {
         }
 
         for row in self.rows_mut() {  // Change all the transitions to correct index
+            if let Some(id) = state_map.get(&row.id) {
+                row.id= *id;
+            }
             for transition in row.transitions_mut() {
                 match transition {
                     Some(t) => {
