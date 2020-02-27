@@ -131,7 +131,7 @@ impl Table {
         info!("optimize step");
 
         info!("remove dead states");
-        self.remove_dead_states();
+        self.remove_dead_state_simple();
 
         // Alpha is just a lookup table for our index optimization.
         let alpha: Alphabet = (0..self[0].transitions().len()).collect();
@@ -192,7 +192,9 @@ impl Table {
         }
 
         // println!("{:?}", merge_set);
-        let ret = !merge_set.is_empty();
+        info!("DFS dead_state removal");
+        let ret = !merge_set.is_empty() || self.remove_dead_states();
+        debug!("ret: {}", ret);
 
         for state in merge_set {
             self.merge(state);
@@ -201,7 +203,56 @@ impl Table {
         ret
     }
 
-    pub fn remove_dead_states(&mut self) {
+    pub fn remove_dead_states(&mut self) -> bool {
+        let mut dead_states = BTreeSet::new();
+        let mut seen = BTreeSet::new();
+        
+        for row in self.rows() {
+            seen.clear();
+            if !self.leads_to_accepting(row.id, &mut seen) {
+                debug!("{} is dead", row.id);
+                dead_states.insert(row.id);
+            }
+        }
+
+        debug!("dead states: {:?}", dead_states);
+        for dead_state in dead_states.iter() {
+            for transition in self.rows[self.row_assignments[*dead_state]].transitions_mut() {
+                *transition = None;
+            }
+        }
+
+        debug!("table after removing dead states: \n{}", self);
+
+        !dead_states.is_empty()
+    }
+
+    fn leads_to_accepting(&self, state: usize, seen: &mut BTreeSet<usize>) -> bool {
+        debug!("l2a {}: {:?}", state, seen);
+
+        if self.rows[self.row_assignments[state]].is_accepting() {
+            debug!("true: {}", state);
+            return true;
+        }
+
+        if seen.contains(&state) {
+            return false;
+        }
+
+        for transition in self.rows[self.row_assignments[state]].transitions().iter().flatten() {
+            debug!("checking transition: {}", transition);
+            seen.insert(*transition);
+
+            if self.leads_to_accepting(*transition, seen) {
+                debug!("leads to accepting: {}", transition);
+                return true;
+            }
+        }
+
+        false
+    }
+
+    pub fn remove_dead_state_simple(&mut self) {
         let mut marked: BTreeSet<usize> = BTreeSet::new();
 
         // Fully self-referential states
@@ -221,10 +272,12 @@ impl Table {
         );
 
         // Remove all dead states in marked
+        debug!("simple dead_states: {:?}", marked);
         for state in marked {
-            debug!("Removing {:?}", self.rows[state]);
-
-            self.rows.remove(state);
+            debug!("State: {}", state);
+            debug!("Assignments: {:?}", self.row_assignments);
+            debug!("Removing {:?}", self.rows[self.row_assignments[state]]);
+            self.rows.remove(self.row_assignments[state]);
 
             for row in self.rows_mut() {
                 // Update row ids due to removal
@@ -244,6 +297,16 @@ impl Table {
                     }
                 }
             }
+
+            for t in self.row_assignments.iter_mut() {
+                debug!("*{} > {}", t, state);
+                if *t > state {
+                    *t -= 1;
+                }
+            }
+
+            debug!("Row assignments: {:?}", self.row_assignments);
+            debug!("After removing {}:\n{}", state, self);
         }
     }
 
