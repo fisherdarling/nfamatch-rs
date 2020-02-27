@@ -132,6 +132,7 @@ impl Table {
 
         info!("remove dead states");
         self.remove_dead_states();
+        self.remove_dead_branches();
 
         // Alpha is just a lookup table for our index optimization.
         let alpha: Alphabet = (0..self[0].transitions().len()).collect();
