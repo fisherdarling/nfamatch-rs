@@ -106,7 +106,7 @@ impl Table {
         info!("un-optimized table: \n{}", self);
         // Optimize until completed
         while self.optimize_step() {}
-        self.remove_dead_state_simple();
+        // self.remove_dead_state_simple();
         self.remove_dead_states();
 
         // Deal with borrows.
@@ -154,7 +154,6 @@ impl Table {
             .rows()
             .iter()
             .map(|r| r.id)
-            // .inspect(|i| debug!("{}", i))
             .partition(|index| self[self.row_assignments[*index]].is_accepting());
 
         stack.push((accepting_states, 0));
@@ -167,8 +166,6 @@ impl Table {
 
             debug!("Aggregating States on: {}", idx);
             for s in state {
-                // debug!("[state: {}] row: \n{}", s, &self[s]);
-
                 let transition = self[self.row_assignments[s]][idx].map(|i| self.row_assignments[i]);
                 character_aggregate.entry(transition).or_default().insert(s);
             }
@@ -217,10 +214,6 @@ impl Table {
         debug!("dead states: {:?}", dead_states);
         for dead_state in &dead_states {
             self.remove_row_id(*dead_state);
-            // let dead_idx = self.row_assignments[*dead_state];
-            // for transition in self.rows[self.row_assignments[*dead_state]].transitions_mut() {
-            //     *transition = None;
-            // }
         }
 
         debug!("table after removing dead states: \n{}", self);
@@ -254,76 +247,12 @@ impl Table {
         false
     }
 
-    pub fn remove_dead_state_simple(&mut self) {
-        let mut marked: BTreeSet<usize> = BTreeSet::new();
-
-        // Fully self-referential states
-        marked.extend(
-            self.rows()
-                .iter()
-                .filter(|r| !r.is_accepting() && r.transitions().iter().flatten().all(|t| *t == r.id || self.row_assignments[*t] == self.row_assignments[r.id]))
-                .map(|r| r.id),
-        );
-
-        // States with no transitions
-        marked.extend(
-            self.rows()
-                .iter()
-                .filter(|r| !r.is_accepting() && r.transitions().iter().all(Option::is_none))
-                .map(|r| r.id),
-        );
-
-        // Remove all dead states in marked
-        debug!("simple dead_states: {:?}", marked);
-        for state in marked.iter().rev().copied() {
-            debug!("State: {}, Assignments: {:?}", state, self.row_assignments);
-            debug!("Removing {} => {:?}", state, self.rows[self.row_assignments[state]].id);
-            self.remove_row_id(state);
-            // self.rows.remove(self.row_assignments[state]);
-
-            // for row in self.rows_mut() {
-            //     // Update row ids due to removal
-            //     // if row.id > state {
-            //     //     row.id -= 1;
-            //     // }
-
-            //     // Remove all transitions that reference this state
-            //     for transition in row.transitions_mut() {
-            //         if *transition == Some(state) {
-            //             *transition = None;
-            //         } else if let Some(t) = transition {
-            //             // Modify all states greater than two
-            //             // if *t > state {
-            //             //     *t -= 1;
-            //             // }
-            //         }
-            //     }
-            // }
-
-            // // let self.row_assignments[state]
-            // for t in self.row_assignments.iter_mut() {
-            //     // debug!("*{} > {}", t, state);
-            //     if *t >  {
-            //         *t -= 1;
-            //     }
-            // }
-
-            // debug!("Row assignments: {:?}", self.row_assignments);
-            // debug!("After removing {}:\n{}", state, self);
-        }
-    }
-
     pub fn remove_row_id(&mut self, row_id: usize) {
         let row_idx = self.row_assignments[row_id];
         
         self.rows.remove(row_idx);
 
         for row in self.rows_mut() {
-            // Update row ids due to removal
-            // if row.id > state {
-            //     row.id -= 1;
-            // }
-
             // Remove all transitions that reference this state
             for transition in row.transitions_mut() {
                 if *transition == Some(row_id) {
@@ -333,7 +262,6 @@ impl Table {
         }
 
         for t in self.row_assignments.iter_mut() {
-            // debug!("*{} > {}", t, state);
             if *t > row_idx {
                 *t -= 1;
             }
