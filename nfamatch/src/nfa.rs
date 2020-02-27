@@ -138,7 +138,7 @@ impl Nfa {
         let num_states: usize = get_num_states(&first_line);
 
         let mut rows: Vec<Row> = all_rows.map(|r| r.parse().unwrap()).collect();
-        sanitize_rows(&mut rows);
+        make_indexable(&mut rows);
 
         let accepting_state_from_ids: Vec<usize> = rows
             .iter()
@@ -157,7 +157,7 @@ impl Nfa {
     }
 }
 
-fn sanitize_rows(rows: &mut Vec<Row>){
+fn make_indexable(rows: &mut Vec<Row>){
     let mut state_map: BTreeMap<usize,usize> = BTreeMap::new();
     state_map.insert(0,0); // Start node is ALWAYS 0
 

@@ -13,7 +13,7 @@
 // + 8 1 1 1
 
 use log::*;
-use std::collections::{BTreeMap, BTreeSet, BinaryHeap};
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 use std::ops::{Index, IndexMut};
 
@@ -200,8 +200,73 @@ impl Table {
 
         ret
     }
+
     pub fn remove_dead_branches(&mut self) {
-        let mut marked: BinaryHeap<usize> = BinaryHeap::new();
+        let mut marked: Vec<usize> = Vec::new();
+        for row in 0..self.rows.len() {
+            if marked.contains(&row) {
+                continue;
+            }
+            self.dead_bfs(row, &mut marked, &mut BTreeSet::new());
+        }
+        marked.sort();
+        while let Some(row) = marked.pop() {
+            self.rows.remove(row);
+        }
+        self.make_indexable();
+    }
+
+    fn dead_bfs(&self, row: usize, mut marked: &mut Vec<usize>, mut seen: &mut BTreeSet<usize>) -> bool {
+        if self.rows[row].is_accepting() {
+            return true;
+        }
+        if seen.contains(&row) {
+            return false;
+        }
+        if marked.contains(&row) {
+            return false;
+        }
+        let mut is_alive = false;
+        seen.insert(row);
+
+        for transition in self.rows[row].transitions() {
+            match transition {
+                Some(t) => is_alive = is_alive | self.dead_bfs(*t, &mut marked, &mut seen),
+                None => {},
+            }
+        }
+        if !is_alive {
+            marked.push(row);
+        }
+
+        is_alive
+    }
+    
+    fn make_indexable(&mut self) {
+        let mut state_map: BTreeMap<usize,usize> = BTreeMap::new();
+        state_map.insert(0,0); // Start node is ALWAYS 0
+
+        for row in self.rows.iter() {  // Populate a map
+            let id = row.id;
+            if !state_map.contains_key(&id) {
+                state_map.insert(id, state_map.len());
+            }
+        }
+
+        for row in self.rows_mut() {  // Change all the transitions to correct index
+            for transition in row.transitions_mut() {
+                match transition {
+                    Some(t) => {
+                        if let Some(trans) = state_map.get(t) {
+                            *transition = Some(*trans);
+                        } else {  // Get rid of transitions to nodes that do not exist
+                            *transition = None;
+                        }
+                    },
+                    None => (),
+                };
+            }
+        }
     }
 
     pub fn remove_dead_states(&mut self) {
