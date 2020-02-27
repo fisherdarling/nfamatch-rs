@@ -106,6 +106,8 @@ impl Table {
         info!("un-optimized table: \n{}", self);
         // Optimize until completed
         while self.optimize_step() {}
+        self.remove_dead_state_simple();
+        self.remove_dead_states();
 
         // Deal with borrows.
         let Self {
@@ -117,11 +119,11 @@ impl Table {
 
         // Update all assignments to reflect reality.
         for row in rows {
-            for data in row.transitions_mut() {
-                if let Some(idx) = data {
-                    *idx = row_assignments[*idx];
-                }
+            for idx in row.transitions_mut().iter_mut().flatten() {
+                *idx = row_assignments[*idx];
             }
+
+            row.id = row_assignments[row.id];
         }
 
         info!("Optimized Table: \n{}", self);
@@ -131,7 +133,7 @@ impl Table {
         info!("optimize step");
 
         info!("remove dead states");
-        self.remove_dead_state_simple();
+        // self.remove_dead_state_simple();
 
         // Alpha is just a lookup table for our index optimization.
         let alpha: Alphabet = (0..self[0].transitions().len()).collect();
@@ -151,10 +153,9 @@ impl Table {
         let (accepting_states, na_states): (State, State) = self
             .rows()
             .iter()
-            .enumerate()
-            .map(|(i, _)| i)
+            .map(|r| r.id)
             // .inspect(|i| debug!("{}", i))
-            .partition(|index| self[*index].is_accepting());
+            .partition(|index| self[self.row_assignments[*index]].is_accepting());
 
         stack.push((accepting_states, 0));
         stack.push((na_states, 0));
@@ -168,12 +169,11 @@ impl Table {
             for s in state {
                 // debug!("[state: {}] row: \n{}", s, &self[s]);
 
-                let transition = self[s][idx].map(|i| self.row_assignments[i]);
+                let transition = self[self.row_assignments[s]][idx].map(|i| self.row_assignments[i]);
                 character_aggregate.entry(transition).or_default().insert(s);
             }
 
             debug!("Aggregates:");
-
             for (key, value) in character_aggregate.iter() {
                 debug!("{:?} => {:?}", key, value);
             }
@@ -191,7 +191,6 @@ impl Table {
             debug!("");
         }
 
-        // println!("{:?}", merge_set);
         info!("DFS dead_state removal");
         let ret = !merge_set.is_empty() || self.remove_dead_states();
         debug!("ret: {}", ret);
@@ -207,19 +206,21 @@ impl Table {
         let mut dead_states = BTreeSet::new();
         let mut seen = BTreeSet::new();
         
-        for row in self.rows() {
+        for (i, _row) in self.rows().iter().enumerate() {
             seen.clear();
-            if !self.leads_to_accepting(row.id, &mut seen) {
-                debug!("{} is dead", row.id);
-                dead_states.insert(row.id);
+            if !self.leads_to_accepting(i, &mut seen) {
+                debug!("{} is dead", i);
+                dead_states.insert(i);
             }
         }
 
         debug!("dead states: {:?}", dead_states);
-        for dead_state in dead_states.iter() {
-            for transition in self.rows[self.row_assignments[*dead_state]].transitions_mut() {
-                *transition = None;
-            }
+        for dead_state in &dead_states {
+            self.remove_row_id(*dead_state);
+            // let dead_idx = self.row_assignments[*dead_state];
+            // for transition in self.rows[self.row_assignments[*dead_state]].transitions_mut() {
+            //     *transition = None;
+            // }
         }
 
         debug!("table after removing dead states: \n{}", self);
@@ -239,9 +240,10 @@ impl Table {
             return false;
         }
 
+        seen.insert(state);
+
         for transition in self.rows[self.row_assignments[state]].transitions().iter().flatten() {
             debug!("checking transition: {}", transition);
-            seen.insert(*transition);
 
             if self.leads_to_accepting(*transition, seen) {
                 debug!("leads to accepting: {}", transition);
@@ -259,7 +261,7 @@ impl Table {
         marked.extend(
             self.rows()
                 .iter()
-                .filter(|r| !r.is_accepting() && r.transitions().iter().all(|t| *t == Some(r.id)))
+                .filter(|r| !r.is_accepting() && r.transitions().iter().flatten().all(|t| *t == r.id || self.row_assignments[*t] == self.row_assignments[r.id]))
                 .map(|r| r.id),
         );
 
@@ -273,40 +275,68 @@ impl Table {
 
         // Remove all dead states in marked
         debug!("simple dead_states: {:?}", marked);
-        for state in marked {
-            debug!("State: {}", state);
-            debug!("Assignments: {:?}", self.row_assignments);
-            debug!("Removing {:?}", self.rows[self.row_assignments[state]]);
-            self.rows.remove(self.row_assignments[state]);
+        for state in marked.iter().rev().copied() {
+            debug!("State: {}, Assignments: {:?}", state, self.row_assignments);
+            debug!("Removing {} => {:?}", state, self.rows[self.row_assignments[state]].id);
+            self.remove_row_id(state);
+            // self.rows.remove(self.row_assignments[state]);
 
-            for row in self.rows_mut() {
-                // Update row ids due to removal
-                if row.id > state {
-                    row.id -= 1;
-                }
+            // for row in self.rows_mut() {
+            //     // Update row ids due to removal
+            //     // if row.id > state {
+            //     //     row.id -= 1;
+            //     // }
 
-                // Remove all transitions that reference this state
-                for transition in row.transitions_mut() {
-                    if *transition == Some(state) {
-                        *transition = None;
-                    } else if let Some(t) = transition {
-                        // Modify all states greater than two
-                        if *t > state {
-                            *t -= 1;
-                        }
-                    }
+            //     // Remove all transitions that reference this state
+            //     for transition in row.transitions_mut() {
+            //         if *transition == Some(state) {
+            //             *transition = None;
+            //         } else if let Some(t) = transition {
+            //             // Modify all states greater than two
+            //             // if *t > state {
+            //             //     *t -= 1;
+            //             // }
+            //         }
+            //     }
+            // }
+
+            // // let self.row_assignments[state]
+            // for t in self.row_assignments.iter_mut() {
+            //     // debug!("*{} > {}", t, state);
+            //     if *t >  {
+            //         *t -= 1;
+            //     }
+            // }
+
+            // debug!("Row assignments: {:?}", self.row_assignments);
+            // debug!("After removing {}:\n{}", state, self);
+        }
+    }
+
+    pub fn remove_row_id(&mut self, row_id: usize) {
+        let row_idx = self.row_assignments[row_id];
+        
+        self.rows.remove(row_idx);
+
+        for row in self.rows_mut() {
+            // Update row ids due to removal
+            // if row.id > state {
+            //     row.id -= 1;
+            // }
+
+            // Remove all transitions that reference this state
+            for transition in row.transitions_mut() {
+                if *transition == Some(row_id) {
+                    *transition = None;
                 }
             }
+        }
 
-            for t in self.row_assignments.iter_mut() {
-                debug!("*{} > {}", t, state);
-                if *t > state {
-                    *t -= 1;
-                }
+        for t in self.row_assignments.iter_mut() {
+            // debug!("*{} > {}", t, state);
+            if *t > row_idx {
+                *t -= 1;
             }
-
-            debug!("Row assignments: {:?}", self.row_assignments);
-            debug!("After removing {}:\n{}", state, self);
         }
     }
 
@@ -317,15 +347,21 @@ impl Table {
         let mut states: Vec<usize> = state.into_iter().collect();
 
         while states.len() > 1 {
-            let to_remove = self.row_assignments[states.pop().unwrap()];
-            let to_keep = self.row_assignments[states.pop().unwrap()];
-            // debug!("To Remove: {:?}", to_remove);
-            // debug!("To keep: {:?}", to_keep);
+            let to_remove = states.pop().unwrap();
+            let to_keep = states.pop().unwrap();
+            let to_remove_idx = self.row_assignments[to_remove];
+            let to_keep_idx = self.row_assignments[to_keep];
+            debug!("To Keep: {} => {}", to_keep, to_keep_idx);
+            debug!("To Remove: {} => {}", to_remove, to_remove_idx);
+
             self.merge_two(to_keep, to_remove);
-            // debug!(
-            //     "Alpha assigns after merging of two states: {:?}",
-            //     self.row_assignments
-            // );
+            
+            debug!("Table after merging {}, {}:\n{}", to_keep, to_remove, self);
+            debug!(
+                "Alpha assigns after merging of two states: {:?}",
+                self.row_assignments
+            );
+            
             states.push(to_keep);
         }
 
@@ -333,23 +369,19 @@ impl Table {
         debug!("Table after merge: \n{}", self);
     }
 
-    // TODO comment this code
     pub fn merge_two(&mut self, to_keep: usize, to_remove: usize) {
-        let is_accepting = self[to_keep].is_accepting() || self[to_remove].is_accepting();
+        let to_keep_idx = self.row_assignments[to_keep];
+        let to_remove_idx = self.row_assignments[to_remove];
+
+        let is_accepting = self[to_keep_idx].is_accepting() || self[to_remove_idx].is_accepting();
         self.rows[to_keep].set_accepting(is_accepting);
 
-        self.rows.remove(to_remove);
+        self.rows.remove(to_remove_idx);
         for t in self.row_assignments.iter_mut() {
-            if *t == to_remove {
+            if *t == to_remove_idx {
                 *t = to_keep;
-            } else if *t > to_remove {
+            } else if *t > to_remove_idx {
                 *t -= 1;
-            }
-        }
-
-        for row in self.rows_mut() {
-            if row.id > to_remove {
-                row.id -= 1;
             }
         }
     }
