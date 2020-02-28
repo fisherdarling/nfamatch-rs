@@ -217,7 +217,12 @@ impl Table {
         self.make_indexable();
     }
 
-    fn dead_bfs(&self, row: usize, mut marked: &mut Vec<usize>, mut seen: &mut BTreeSet<usize>) -> bool {
+    fn dead_bfs(
+        &self,
+        row: usize,
+        mut marked: &mut Vec<usize>,
+        mut seen: &mut BTreeSet<usize>,
+    ) -> bool {
         if self.rows[row].is_accepting() {
             return true;
         }
@@ -233,7 +238,7 @@ impl Table {
         for transition in self.rows[row].transitions() {
             match transition {
                 Some(t) => is_alive = is_alive | self.dead_bfs(*t, &mut marked, &mut seen),
-                None => {},
+                None => {}
             }
         }
         if !is_alive {
@@ -242,31 +247,33 @@ impl Table {
 
         is_alive
     }
-    
     fn make_indexable(&mut self) {
-        let mut state_map: BTreeMap<usize,usize> = BTreeMap::new();
-        state_map.insert(0,0); // Start node is ALWAYS 0
+        let mut state_map: BTreeMap<usize, usize> = BTreeMap::new();
+        state_map.insert(0, 0); // Start node is ALWAYS 0
 
-        for row in self.rows.iter() {  // Populate a map
+        for row in self.rows.iter() {
+            // Populate a map
             let id = row.id;
             if !state_map.contains_key(&id) {
                 state_map.insert(id, state_map.len());
             }
         }
 
-        for row in self.rows_mut() {  // Change all the transitions to correct index
+        for row in self.rows_mut() {
+            // Change all the transitions to correct index
             if let Some(id) = state_map.get(&row.id) {
-                row.id= *id;
+                row.id = *id;
             }
             for transition in row.transitions_mut() {
                 match transition {
                     Some(t) => {
                         if let Some(trans) = state_map.get(t) {
                             *transition = Some(*trans);
-                        } else {  // Get rid of transitions to nodes that do not exist
+                        } else {
+                            // Get rid of transitions to nodes that do not exist
                             *transition = None;
                         }
-                    },
+                    }
                     None => (),
                 };
             }
@@ -341,26 +348,32 @@ impl Table {
         debug!("Alpha assigns after merge: {:?}", self.row_assignments);
         debug!("Table after merge: \n{}", self);
     }
-
     // TODO comment this code
     pub fn merge_two(&mut self, to_keep: usize, to_remove: usize) {
+        debug!("Keep: {} , Remove {}", to_keep, to_remove);
+        debug!("Self at the start of merge_two \n{}", *self);
         let is_accepting = self[to_keep].is_accepting() || self[to_remove].is_accepting();
         self.rows[to_keep].set_accepting(is_accepting);
 
         self.rows.remove(to_remove);
-        for t in self.row_assignments.iter_mut() {
-            if *t == to_remove {
-                *t = to_keep;
-            } else if *t > to_remove {
-                *t -= 1;
-            }
-        }
+        // for t in self.row_assignments.iter_mut() {
+        //     if *t == to_remove {
+        //         *t = to_keep;
+        //     } else if *t > to_remove {
+        //         *t -= 1;
+        //     }
+        // }
 
         for row in self.rows_mut() {
-            if row.id > to_remove {
-                row.id -= 1;
+            for trans in row.transitions_mut() {
+                if let Some(t) = trans {
+                    if *t == to_remove {
+                        *t = to_keep;
+                    }
+                }
             }
         }
+        self.make_indexable();
     }
 }
 

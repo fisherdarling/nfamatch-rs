@@ -1,3 +1,4 @@
+use log::*;
 use std::fmt;
 use std::ops::{Index, IndexMut};
 use std::str::FromStr;
@@ -10,6 +11,31 @@ pub struct Row {
 }
 
 impl Row {
+    pub fn from_str_custom(input: &str) -> Result<Row, ()> {
+        println!("parsing input to row: {}", input);
+        let tokens: Vec<&str> = input.split(' ').collect();
+
+        match tokens.as_slice() {
+            [accept, id, transitions @ ..] => {
+                let is_accept = *accept == "+";
+                let id = id.parse().unwrap();
+                let transitions: Vec<Option<usize>> = transitions
+                    .iter()
+                    .map(|s| {
+                        if *s == "E" {
+                            None
+                        } else {
+                            Some(s.parse().unwrap())
+                        }
+                    })
+                    .collect();
+
+                Ok(Row::new(is_accept, id, transitions))
+            }
+            _ => unreachable!(),
+        }
+    }
+
     pub fn new(accepting_state: bool, id: usize, transitions: Vec<Option<usize>>) -> Self {
         Self {
             accepting_state,
@@ -61,6 +87,7 @@ impl FromStr for Row {
     type Err = ();
 
     fn from_str(input: &str) -> Result<Row, ()> {
+        println!("parsing input to row: {}", input);
         let tokens: Vec<&str> = input.split(' ').collect();
 
         match tokens.as_slice() {

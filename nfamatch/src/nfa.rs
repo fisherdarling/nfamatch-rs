@@ -53,7 +53,12 @@ impl Nfa {
         initial_state = self.follow_lambda(&initial_state);
         debug!("Initial Lambda Closure: {:?}", initial_state);
 
-        let new_row = DfaRow::blank_row(false, row_number, alpha_len);
+        let initial_lambda_accepting = initial_state
+            .intersection(&self.accepting_states)
+            .next()
+            .is_some();
+
+        let new_row = DfaRow::blank_row(initial_lambda_accepting, row_number, alpha_len);
         dfa_rows.push(new_row);
         seen_states.insert(initial_state.clone(), row_number);
         states_to_process.push(initial_state);
@@ -69,7 +74,7 @@ impl Nfa {
                 let lambda_clone = lambda_closure.clone();
 
                 if !seen_states.contains_key(&lambda_closure) {
-                    debug!("Lambda closure in seen_states {:?}", lambda_closure);
+                    debug!("Lambda closure in seen_states {:?}of", lambda_closure);
                     let accepting_state = lambda_closure
                         .intersection(&self.accepting_states)
                         .next()
@@ -140,7 +145,12 @@ impl Nfa {
         let (character_map, lambda_char) = get_char_map(&first_line);
         let num_states: usize = get_num_states(&first_line);
 
+        info!("Right before rows");
+        info!("first line, {}", first_line);
+        info!("all rows: {:#?}", all_rows);
         let mut rows: Vec<Row> = all_rows.map(|r| r.parse().unwrap()).collect();
+        info!("Right after rows");
+
         make_indexable(&mut rows);
 
         let accepting_state_from_ids: Vec<usize> = rows
