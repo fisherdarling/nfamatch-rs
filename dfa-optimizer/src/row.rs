@@ -1,4 +1,3 @@
-use log::*;
 use std::fmt;
 use std::ops::{Index, IndexMut};
 use std::str::FromStr;

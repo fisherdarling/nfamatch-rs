@@ -1,5 +1,4 @@
 use log::*;
-use std::fmt;
 use std::str::FromStr;
 
 #[derive(Debug, Default)]

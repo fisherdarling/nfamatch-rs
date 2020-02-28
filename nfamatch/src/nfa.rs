@@ -145,9 +145,6 @@ impl Nfa {
         let (character_map, lambda_char) = get_char_map(&first_line);
         let num_states: usize = get_num_states(&first_line);
 
-        info!("Right before rows");
-        info!("first line, {}", first_line);
-        info!("all rows: {:#?}", all_rows);
         // let mut rows: Vec<Row> = all_rows.map(|r| r.parse().unwrap()).collect();
         let mut rows: Vec<Row> = Vec::new();
         for row in all_rows {
@@ -157,7 +154,6 @@ impl Nfa {
             }
             // rows.push(Row::from_str_custom(&row).unwrap());
         }
-        info!("Right after rows");
 
         make_indexable(&mut rows);
 
