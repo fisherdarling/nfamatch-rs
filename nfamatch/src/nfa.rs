@@ -36,6 +36,7 @@ impl Nfa {
 
     pub fn to_dfa(&self) -> DfaTable {
         info!("character map: {:?} ", self.character_map());
+        info!("self at the start of to_dfa {:#?}", self);
         let mut dfa_char_map = self.character_map().clone();
         dfa_char_map.remove(&self.lambda_char);
         let alpha_len = dfa_char_map.len(); // length of the new dfa alphabet
@@ -68,11 +69,13 @@ impl Nfa {
                 let lambda_clone = lambda_closure.clone();
 
                 if !seen_states.contains_key(&lambda_closure) {
+                    debug!("Lambda closure in seen_states {:?}", lambda_closure);
                     let accepting_state = lambda_closure
                         .intersection(&self.accepting_states)
                         .next()
                         .is_some();
 
+                    info!("Is the new row an accepting state? {}", accepting_state);
                     let new_row = DfaRow::blank_row(accepting_state, row_number, alpha_len);
 
                     dfa_rows.push(new_row);
@@ -157,9 +160,9 @@ impl Nfa {
     }
 }
 
-fn make_indexable(rows: &mut Vec<Row>){
-    let mut state_map: BTreeMap<usize,usize> = BTreeMap::new();
-    state_map.insert(0,0); // Start node is ALWAYS 0
+fn make_indexable(rows: &mut Vec<Row>) {
+    let mut state_map: BTreeMap<usize, usize> = BTreeMap::new();
+    state_map.insert(0, 0); // Start node is ALWAYS 0
 
     for row in rows.iter() {
         let from_index = row.get_from_id();
