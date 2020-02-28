@@ -1,3 +1,4 @@
+use log::*;
 use std::fmt;
 use std::str::FromStr;
 
@@ -41,6 +42,25 @@ impl Row {
 
     pub fn get_transitions(&self) -> &Vec<char> {
         &self.transitions
+    }
+
+    // type Err = ();
+    pub fn from_str_custom(input: &str) -> Result<Self, ()> {
+        info!("Input for from_str_custom {}", input);
+        let tokens: Vec<&str> = input.trim().split_whitespace().collect();
+
+        match tokens.as_slice() {
+            [accept, from_id, to_id, transitions @ ..] => {
+                let is_accept = *accept == "+";
+                let from_id = from_id.parse().unwrap();
+                let to_id = to_id.parse().unwrap();
+                let transitions: Vec<char> =
+                    transitions.iter().map(|s| s.parse().unwrap()).collect();
+
+                Ok(Row::new(is_accept, from_id, to_id, transitions))
+            }
+            _ => Err(()),
+        }
     }
 }
 

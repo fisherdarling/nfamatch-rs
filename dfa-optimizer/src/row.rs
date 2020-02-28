@@ -32,7 +32,7 @@ impl Row {
 
                 Ok(Row::new(is_accept, id, transitions))
             }
-            _ => unreachable!(),
+            _ => Err(()),
         }
     }
 
