@@ -133,7 +133,8 @@ impl Table {
         info!("optimize step");
 
         info!("remove dead states");
-        // self.remove_dead_state_simple();
+        self.remove_dead_states();
+        self.remove_dead_branches();
 
         // Alpha is just a lookup table for our index optimization.
         let alpha: Alphabet = (0..self[0].transitions().len()).collect();
@@ -199,17 +200,86 @@ impl Table {
         ret
     }
 
-    pub fn remove_dead_states(&mut self) -> bool {
-        let mut dead_states = BTreeSet::new();
-        let mut seen = BTreeSet::new();
-        
-        for (i, _row) in self.rows().iter().enumerate() {
-            seen.clear();
-            if !self.leads_to_accepting(i, &mut seen) {
-                debug!("{} is dead", i);
-                dead_states.insert(i);
+    pub fn remove_dead_branches(&mut self) {
+        let mut marked: Vec<usize> = Vec::new();
+        for row in 0..self.rows.len() {
+            if marked.contains(&row) {
+                continue;
+            }
+            self.dead_bfs(row, &mut marked, &mut BTreeSet::new());
+        }
+        marked.sort();
+        while let Some(row) = marked.pop() {
+            self.rows.remove(row);
+        }
+        self.make_indexable();
+    }
+
+    fn dead_bfs(
+        &self,
+        row: usize,
+        mut marked: &mut Vec<usize>,
+        mut seen: &mut BTreeSet<usize>,
+    ) -> bool {
+        if self.rows[row].is_accepting() {
+            return true;
+        }
+        if seen.contains(&row) {
+            return false;
+        }
+        if marked.contains(&row) {
+            return false;
+        }
+        let mut is_alive = false;
+        seen.insert(row);
+
+        for transition in self.rows[row].transitions() {
+            match transition {
+                Some(t) => is_alive = is_alive | self.dead_bfs(*t, &mut marked, &mut seen),
+                None => {}
             }
         }
+        if !is_alive {
+            marked.push(row);
+        }
+
+        is_alive
+    }
+    fn make_indexable(&mut self) {
+        let mut state_map: BTreeMap<usize, usize> = BTreeMap::new();
+        state_map.insert(0, 0); // Start node is ALWAYS 0
+
+        for row in self.rows.iter() {
+            // Populate a map
+            let id = row.id;
+            if !state_map.contains_key(&id) {
+                state_map.insert(id, state_map.len());
+            }
+        }
+
+        for row in self.rows_mut() {
+            // Change all the transitions to correct index
+            if let Some(id) = state_map.get(&row.id) {
+                row.id = *id;
+            }
+            for transition in row.transitions_mut() {
+                match transition {
+                    Some(t) => {
+                        if let Some(trans) = state_map.get(t) {
+                            *transition = Some(*trans);
+                        } else {
+                            // Get rid of transitions to nodes that do not exist
+                            *transition = None;
+                        }
+                    }
+                    None => (),
+                };
+            }
+        }
+    }
+
+    pub fn remove_dead_states(&mut self) {
+        let mut marked: BTreeSet<usize> = BTreeSet::new();
 
         debug!("dead states: {:?}", dead_states);
         for dead_state in &dead_states {
@@ -296,22 +366,32 @@ impl Table {
         debug!("Alpha assigns after merge: {:?}", self.row_assignments);
         debug!("Table after merge: \n{}", self);
     }
-
+    // TODO comment this code
     pub fn merge_two(&mut self, to_keep: usize, to_remove: usize) {
-        let to_keep_idx = self.row_assignments[to_keep];
-        let to_remove_idx = self.row_assignments[to_remove];
-
-        let is_accepting = self[to_keep_idx].is_accepting() || self[to_remove_idx].is_accepting();
+        debug!("Keep: {} , Remove {}", to_keep, to_remove);
+        debug!("Self at the start of merge_two \n{}", *self);
+        let is_accepting = self[to_keep].is_accepting() || self[to_remove].is_accepting();
         self.rows[to_keep].set_accepting(is_accepting);
 
-        self.rows.remove(to_remove_idx);
-        for t in self.row_assignments.iter_mut() {
-            if *t == to_remove_idx {
-                *t = to_keep;
-            } else if *t > to_remove_idx {
-                *t -= 1;
+        self.rows.remove(to_remove);
+        // for t in self.row_assignments.iter_mut() {
+        //     if *t == to_remove {
+        //         *t = to_keep;
+        //     } else if *t > to_remove {
+        //         *t -= 1;
+        //     }
+        // }
+
+        for row in self.rows_mut() {
+            for trans in row.transitions_mut() {
+                if let Some(t) = trans {
+                    if *t == to_remove {
+                        *t = to_keep;
+                    }
+                }
             }
         }
+        self.make_indexable();
     }
 }
 

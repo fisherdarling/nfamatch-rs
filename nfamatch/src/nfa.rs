@@ -36,6 +36,7 @@ impl Nfa {
 
     pub fn to_dfa(&self) -> DfaTable {
         info!("character map: {:?} ", self.character_map());
+        info!("self at the start of to_dfa {:#?}", self);
         let mut dfa_char_map = self.character_map().clone();
         dfa_char_map.remove(&self.lambda_char);
         let alpha_len = dfa_char_map.len(); // length of the new dfa alphabet
@@ -52,7 +53,12 @@ impl Nfa {
         initial_state = self.follow_lambda(&initial_state);
         debug!("Initial Lambda Closure: {:?}", initial_state);
 
-        let new_row = DfaRow::blank_row(false, row_number, alpha_len);
+        let initial_lambda_accepting = initial_state
+            .intersection(&self.accepting_states)
+            .next()
+            .is_some();
+
+        let new_row = DfaRow::blank_row(initial_lambda_accepting, row_number, alpha_len);
         dfa_rows.push(new_row);
         seen_states.insert(initial_state.clone(), row_number);
         states_to_process.push(initial_state);
@@ -68,11 +74,13 @@ impl Nfa {
                 let lambda_clone = lambda_closure.clone();
 
                 if !seen_states.contains_key(&lambda_closure) {
+                    debug!("Lambda closure in seen_states {:?}of", lambda_closure);
                     let accepting_state = lambda_closure
                         .intersection(&self.accepting_states)
                         .next()
                         .is_some();
 
+                    info!("Is the new row an accepting state? {}", accepting_state);
                     let new_row = DfaRow::blank_row(accepting_state, row_number, alpha_len);
 
                     dfa_rows.push(new_row);
@@ -137,8 +145,17 @@ impl Nfa {
         let (character_map, lambda_char) = get_char_map(&first_line);
         let num_states: usize = get_num_states(&first_line);
 
-        let mut rows: Vec<Row> = all_rows.map(|r| r.parse().unwrap()).collect();
-        sanitize_rows(&mut rows);
+        // let mut rows: Vec<Row> = all_rows.map(|r| r.parse().unwrap()).collect();
+        let mut rows: Vec<Row> = Vec::new();
+        for row in all_rows {
+            match Row::from_str_custom(&row) {
+                Ok(row) => rows.push(row),
+                _ => break,
+            }
+            // rows.push(Row::from_str_custom(&row).unwrap());
+        }
+
+        make_indexable(&mut rows);
 
         let accepting_state_from_ids: Vec<usize> = rows
             .iter()
@@ -157,9 +174,9 @@ impl Nfa {
     }
 }
 
-fn sanitize_rows(rows: &mut Vec<Row>){
-    let mut state_map: BTreeMap<usize,usize> = BTreeMap::new();
-    state_map.insert(0,0); // Start node is ALWAYS 0
+fn make_indexable(rows: &mut Vec<Row>) {
+    let mut state_map: BTreeMap<usize, usize> = BTreeMap::new();
+    state_map.insert(0, 0); // Start node is ALWAYS 0
 
     for row in rows.iter() {
         let from_index = row.get_from_id();
