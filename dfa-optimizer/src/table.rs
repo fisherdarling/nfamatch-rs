@@ -107,7 +107,7 @@ impl Table {
         // Optimize until completed
         while self.optimize_step() {}
         // self.remove_dead_state_simple();
-        self.remove_dead_states();
+        // self.remove_dead_states();
 
         // Deal with borrows.
         let Self {
@@ -133,7 +133,7 @@ impl Table {
         info!("optimize step");
 
         info!("remove dead states");
-        self.remove_dead_states();
+        // self.remove_dead_states();
         self.remove_dead_branches();
 
         // Alpha is just a lookup table for our index optimization.
@@ -190,7 +190,7 @@ impl Table {
         }
 
         info!("DFS dead_state removal");
-        let ret = !merge_set.is_empty() || self.remove_dead_states();
+        let ret = !merge_set.is_empty();// || self.remove_dead_states();
         debug!("ret: {}", ret);
 
         for state in merge_set {
@@ -278,18 +278,18 @@ impl Table {
         }
     }
 
-    pub fn remove_dead_states(&mut self) {
-        let mut marked: BTreeSet<usize> = BTreeSet::new();
+    // pub fn remove_dead_states(&mut self) {
+    //     let mut marked: BTreeSet<usize> = BTreeSet::new();
 
-        debug!("dead states: {:?}", dead_states);
-        for dead_state in &dead_states {
-            self.remove_row_id(*dead_state);
-        }
+    //     debug!("dead states: {:?}", dead_states);
+    //     for dead_state in &dead_states {
+    //         self.remove_row_id(*dead_state);
+    //     }
 
-        debug!("table after removing dead states: \n{}", self);
+    //     debug!("table after removing dead states: \n{}", self);
 
-        !dead_states.is_empty()
-    }
+    //     !dead_states.is_empty()
+    // }
 
     fn leads_to_accepting(&self, state: usize, seen: &mut BTreeSet<usize>) -> bool {
         debug!("l2a {}: {:?}", state, seen);
