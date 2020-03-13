@@ -61,3 +61,33 @@ impl Row {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use crate::row::Row;
+
+    #[test]
+    #[should_panic]
+    fn test_empty_str_parse() {
+        let r = Row::from_str_custom("");
+        r.unwrap();
+    }
+
+    #[test]
+    fn test_accept_str_parse_accepting() {
+        let r = Row::from_str_custom("+ 0 1 a b c").unwrap();
+        assert_eq!(r.get_accepting_state(), true);
+        assert_eq!(r.get_from_id(), 0);
+        assert_eq!(r.get_to_id(), 1);
+        assert_eq!(*r.get_transitions(), vec!['a', 'b', 'c']);
+    }
+
+    #[test]
+    fn test_accept_str_parse_non_accepting() {
+        let r = Row::from_str_custom("- 0 1 a b c").unwrap();
+        assert_eq!(r.get_accepting_state(), false);
+        assert_eq!(r.get_from_id(), 0);
+        assert_eq!(r.get_to_id(), 1);
+        assert_eq!(*r.get_transitions(), vec!['a', 'b', 'c']);
+    }
+}

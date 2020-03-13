@@ -1,7 +1,7 @@
+use log::*;
 use std::fs::File;
 use std::io::{BufRead, BufReader, BufWriter, Write};
 use std::path::PathBuf;
-
 use structopt::StructOpt;
 
 use dfa_optimizer::{Row, Table};
@@ -54,7 +54,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if args.verbose {
         debug!("\nOptimal DFA:");
         print!("{}", table);
-        debug!();
     }
 
     // args.alphabet.sort();
@@ -68,7 +67,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         debug!("Alphabet: {:?}", args.alphabet);
         debug!("Tokens: {:?}", args.tokens);
         debug!("Mapping: {:#?}", mapping);
-        debug!();
     }
 
     for token in args.tokens {
