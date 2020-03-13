@@ -1,5 +1,4 @@
 use log::*;
-use std::str::FromStr;
 
 #[derive(Debug, Default)]
 pub struct Row {
@@ -59,27 +58,6 @@ impl Row {
                 Ok(Row::new(is_accept, from_id, to_id, transitions))
             }
             _ => Err(()),
-        }
-    }
-}
-
-impl FromStr for Row {
-    type Err = ();
-
-    fn from_str(input: &str) -> Result<Self, Self::Err> {
-        let tokens: Vec<&str> = input.trim().split_whitespace().collect();
-
-        match tokens.as_slice() {
-            [accept, from_id, to_id, transitions @ ..] => {
-                let is_accept = *accept == "+";
-                let from_id = from_id.parse().unwrap();
-                let to_id = to_id.parse().unwrap();
-                let transitions: Vec<char> =
-                    transitions.iter().map(|s| s.parse().unwrap()).collect();
-
-                Ok(Row::new(is_accept, from_id, to_id, transitions))
-            }
-            _ => unreachable!(),
         }
     }
 }

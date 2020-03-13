@@ -44,6 +44,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     for input in args.rest {
         info!("Checking `{}`", input);
         match table.does_match(&input, &dfa_char_map) {
+            // don't change these to debug, they are always needed for the script
             None => println!("OUTPUT :M:"),
             Some(i) => println!("OUTPUT {}", i),
         }

@@ -45,16 +45,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut table = Table::from(rows);
 
     if args.verbose {
-        println!("Input DFA:");
+        debug!("Input DFA:");
         print!("{}", table);
     }
 
     table.optimize();
 
     if args.verbose {
-        println!("\nOptimal DFA:");
+        debug!("\nOptimal DFA:");
         print!("{}", table);
-        println!();
+        debug!();
     }
 
     // args.alphabet.sort();
@@ -65,14 +65,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     if args.verbose {
-        println!("Alphabet: {:?}", args.alphabet);
-        println!("Tokens: {:?}", args.tokens);
-        println!("Mapping: {:#?}", mapping);
-        println!();
+        debug!("Alphabet: {:?}", args.alphabet);
+        debug!("Tokens: {:?}", args.tokens);
+        debug!("Mapping: {:#?}", mapping);
+        debug!();
     }
 
     for token in args.tokens {
-        println!("{}: {:?}", token, table.does_match(&token, &mapping));
+        debug!("{}: {:?}", token, table.does_match(&token, &mapping));
     }
 
     let new_file = File::create(args.out)?;

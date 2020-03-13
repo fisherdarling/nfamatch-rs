@@ -6,3 +6,6 @@ build:
 
 clean:
 	cargo clean
+	rm *.m
+	rm *.cmptt
+	rm *.tt

@@ -1,3 +1,4 @@
+use log::*;
 use std::fmt;
 use std::ops::{Index, IndexMut};
 use std::str::FromStr;
@@ -11,7 +12,7 @@ pub struct Row {
 
 impl Row {
     pub fn from_str_custom(input: &str) -> Result<Row, ()> {
-        println!("parsing input to row: {}", input);
+        debug!("parsing input to row: {}", input);
         let tokens: Vec<&str> = input.split(' ').collect();
 
         match tokens.as_slice() {
@@ -86,7 +87,7 @@ impl FromStr for Row {
     type Err = ();
 
     fn from_str(input: &str) -> Result<Row, ()> {
-        println!("parsing input to row: {}", input);
+        debug!("parsing input to row: {}", input);
         let tokens: Vec<&str> = input.split(' ').collect();
 
         match tokens.as_slice() {

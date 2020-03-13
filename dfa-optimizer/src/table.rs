@@ -1,17 +1,3 @@
-// - 0 2 1 2
-// - 1 3 2 2
-// - 2 2 2 2
-// - 3 6 3 4
-// - 6 6 7 5
-// + 7 2 2 2
-
-// - 0 1 2 1
-// - 1 1 1 1
-// - 2 3 1 1
-// - 3 4 5 3
-// - 4 4 8 6
-// + 8 1 1 1
-
 use log::*;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
@@ -43,10 +29,6 @@ impl Table {
             row_assignments,
         }
     }
-
-    // pub fn get_start(&self) -> &Row {
-    //     &self.start
-    // }
 
     pub fn rows(&self) -> &[Row] {
         &self.rows
@@ -167,7 +149,8 @@ impl Table {
 
             debug!("Aggregating States on: {}", idx);
             for s in state {
-                let transition = self[self.row_assignments[s]][idx].map(|i| self.row_assignments[i]);
+                let transition =
+                    self[self.row_assignments[s]][idx].map(|i| self.row_assignments[i]);
                 character_aggregate.entry(transition).or_default().insert(s);
             }
 
@@ -190,7 +173,7 @@ impl Table {
         }
 
         info!("DFS dead_state removal");
-        let ret = !merge_set.is_empty();// || self.remove_dead_states();
+        let ret = !merge_set.is_empty(); // || self.remove_dead_states();
         debug!("ret: {}", ret);
 
         for state in merge_set {
@@ -278,48 +261,8 @@ impl Table {
         }
     }
 
-    // pub fn remove_dead_states(&mut self) {
-    //     let mut marked: BTreeSet<usize> = BTreeSet::new();
-
-    //     debug!("dead states: {:?}", dead_states);
-    //     for dead_state in &dead_states {
-    //         self.remove_row_id(*dead_state);
-    //     }
-
-    //     debug!("table after removing dead states: \n{}", self);
-
-    //     !dead_states.is_empty()
-    // }
-
-    fn leads_to_accepting(&self, state: usize, seen: &mut BTreeSet<usize>) -> bool {
-        debug!("l2a {}: {:?}", state, seen);
-
-        if self.rows[self.row_assignments[state]].is_accepting() {
-            debug!("true: {}", state);
-            return true;
-        }
-
-        if seen.contains(&state) {
-            return false;
-        }
-
-        seen.insert(state);
-
-        for transition in self.rows[self.row_assignments[state]].transitions().iter().flatten() {
-            debug!("checking transition: {}", transition);
-
-            if self.leads_to_accepting(*transition, seen) {
-                debug!("leads to accepting: {}", transition);
-                return true;
-            }
-        }
-
-        false
-    }
-
     pub fn remove_row_id(&mut self, row_id: usize) {
         let row_idx = self.row_assignments[row_id];
-        
         self.rows.remove(row_idx);
 
         for row in self.rows_mut() {
@@ -353,13 +296,11 @@ impl Table {
             debug!("To Remove: {} => {}", to_remove, to_remove_idx);
 
             self.merge_two(to_keep, to_remove);
-            
             debug!("Table after merging {}, {}:\n{}", to_keep, to_remove, self);
             debug!(
                 "Alpha assigns after merging of two states: {:?}",
                 self.row_assignments
             );
-            
             states.push(to_keep);
         }
 
@@ -374,13 +315,6 @@ impl Table {
         self.rows[to_keep].set_accepting(is_accepting);
 
         self.rows.remove(to_remove);
-        // for t in self.row_assignments.iter_mut() {
-        //     if *t == to_remove {
-        //         *t = to_keep;
-        //     } else if *t > to_remove {
-        //         *t -= 1;
-        //     }
-        // }
 
         for row in self.rows_mut() {
             for trans in row.transitions_mut() {
